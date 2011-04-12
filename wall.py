@@ -13,5 +13,8 @@ def pixel(x, y, color="ff0000"):
 def frame(buf):
 	s.send("03%s\r\n" % buf)
 
+def send(buf):
+	s.send(buf + "\r\n")
+
 def clear(): frame("0" * 6 * 15 * 16)
 
