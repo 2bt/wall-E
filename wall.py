@@ -8,7 +8,7 @@ def init():
 	s.connect(("172.22.99.6", 1338))
 
 def pixel(x, y, color="ff0000"):
-	s.send("02%02x%02x%s\r\n" % (16 - x, 15 - y, color))
+	s.send("02%02x%02x%s\r\n" % (x+1, y+1, color))
 
 def frame(buf):
 	s.send("03%s\r\n" % buf)

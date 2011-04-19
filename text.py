@@ -99,6 +99,7 @@ def loop():
 		time.sleep(0.05)
 
 wall.init()
+wall.send("0403")
 wall.clear()
 
 os.system("stty cbreak -echo min 0")

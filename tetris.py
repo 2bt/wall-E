@@ -92,7 +92,7 @@ class Tetris:
 	def render(self):
 		if self.field == self.old_field: return
 		self.old_field = self.field[:]
-		b = "".join(color_palette[c] for i in range(self.width - 1, -1, -1) for c in reversed(self.field[i::self.width]))
+		b = "".join(color_palette[c] for c in self.field)
 		wall.frame(b)
 
 	def check_rows(self):
