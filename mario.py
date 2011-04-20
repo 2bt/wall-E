@@ -12,7 +12,7 @@ import wall
 
 class Engine:
 
-	WALL = 0 # True
+	WALL = True
 
 	def __init__(self):
 
@@ -71,7 +71,7 @@ class Entity:
 		# die after a hit?
 		return False
 	
-	def __init__(self, x, y):
+	def __init__(self, x, y, c):
 		pass
 
 	def render(self):
@@ -79,17 +79,30 @@ class Entity:
 
 class Block(Entity):
 	solid = True
-	def __init__(self, x, y):
+	def __init__(self, x, y, c):
 		self.x = x
 		self.y = y
+		self.c = c
+
 
 	def render(self):
 		if level.cam_pos <= self.x < level.cam_pos + 16:
-			main.buffer[self.y][self.x - level.cam_pos] = "552222"
+
+			color = {
+				"b":	"552222",
+				"c":	["ddcc00", "ccbb00", "998800", "ccbb00"][(main.ticks/12)%4],
+				"e":	"bb9900",
+			}
+
+			main.buffer[self.y][self.x - level.cam_pos] = color[self.c]
 
 	def hit(self):
-		return mario.big
-
+		if self.c == "b": return mario.big
+		elif self.c == "c":
+			self.c = "e"
+			# TODO: gain one coin
+			return False
+		elif self.c == "e": return False
 
 class Level:
 	def __init__(self, filename):
@@ -97,7 +110,7 @@ class Level:
 		self.colors = {
 			" ":	"9999dd",		# background
 			"Z":	"770000",		# wall
-			"w":	"dddddd",		# clouds
+			"w":	"cccccc",		# clouds
 			"g":	"22aa22",		# bushes
 		}
 
@@ -108,16 +121,16 @@ class Level:
 
 		self.cam_pos = 0
 
-		# FIXME
 		self.entities = []
-		self.dynamic = f[15:30]
+		dynamic = f[15:30]
 		table = {
 			"b":	Block,
+			"c":	Block,
 		}
-		for y, row in enumerate(self.dynamic):
+		for y, row in enumerate(dynamic):
 			for x, c in enumerate(row):
 				if c in table:
-					self.entities.append(table[c](x, y))
+					self.entities.append(table[c](x, y, c))
 
 
 	def is_solid(self, x, y):
@@ -163,10 +176,14 @@ class Mario:
 		self.move_y_acc = 0
 
 	def render(self):
-		main.buffer[self.y][self.x - level.cam_pos] = "aa0000"
-		if self.big:
-			main.buffer[self.y-1][self.x - level.cam_pos] = "bb8800"
 
+		if self.big:
+			main.buffer[self.y - 1][self.x - level.cam_pos] = "aa0000"
+			main.buffer[self.y][self.x - level.cam_pos] = "0000cc"
+#			main.buffer[self.y - 1][self.x - level.cam_pos] = "bb8800"
+#			main.buffer[self.y][self.x - level.cam_pos] = "aa0000"
+		else:
+			main.buffer[self.y][self.x - level.cam_pos] = "aa0000"
 
 	def update(self):
 
@@ -252,7 +269,7 @@ class Main:
 		mario = Mario()
 
 		self.buffer = [[0] * 16 for i in range(15)]
-
+		self.ticks = 0
 
 		pygame.display.init()
 		pygame.display.set_mode((320, 300), DOUBLEBUF | OPENGL)
@@ -272,6 +289,7 @@ class Main:
 
 			self.render()
 			time.sleep(0.01)
+			self.ticks += 1
 
 
 	def render(self):
