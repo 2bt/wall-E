@@ -1,20 +1,22 @@
 #!/usr/bin/python
 
+# FIXME (everything following this line)
+
 import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import time
-
 import wall
 
 
-WALL = True
-
 class Engine:
+
+	WALL = 0 # True
+
 	def __init__(self):
 
-		if WALL: wall.init()
+		if self.WALL: wall.init()
 
 		self.keys = {}
 		self.buffer = [["000000"] * 16 for i in range(15)]
@@ -45,7 +47,6 @@ class Engine:
 
 		# local output
 		glClear(GL_COLOR_BUFFER_BIT)
-
 		glBegin(GL_QUADS)
 		for y, row in enumerate(buf):
 			for x, c in enumerate(row):
@@ -54,15 +55,40 @@ class Engine:
 				glVertex(x+1, y)
 				glVertex(x+1, y+1)
 				glVertex(x, y+1)
-
 		glEnd()
 		pygame.display.flip()
 
-
 		# wall output
-		buf = "".join(c for row in buf for c in row)
-		if WALL:
+		if self.WALL:
+			buf = "".join(c for row in buf for c in row)
 			wall.frame(buf)
+
+
+class Entity:
+	solid = False
+	
+	def hit(self):
+		# die after a hit?
+		return False
+	
+	def __init__(self, x, y):
+		pass
+
+	def render(self):
+		pass
+
+class Block(Entity):
+	solid = True
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
+
+	def render(self):
+		if level.cam_pos <= self.x < level.cam_pos + 16:
+			main.buffer[self.y][self.x - level.cam_pos] = "552222"
+
+	def hit(self):
+		return mario.big
 
 
 class Level:
@@ -80,20 +106,47 @@ class Level:
 		self.static = f[:15]
 		self.length = len(f[0])
 
-		# TODO
-		dynamic = f[15:30]
+		self.cam_pos = 0
+
+		# FIXME
+		self.entities = []
+		self.dynamic = f[15:30]
+		table = {
+			"b":	Block,
+		}
+		for y, row in enumerate(self.dynamic):
+			for x, c in enumerate(row):
+				if c in table:
+					self.entities.append(table[c](x, y))
 
 
 	def is_solid(self, x, y):
-		return self.static[y][x].isupper()
+		if self.static[y][x].isupper():
+			return True
+
+		for e in self.entities:
+			if e.x == x and e.y == y and e.solid:
+				return True
+
+		return False
+
+
+	def hit(self):
+		for e in self.entities:
+			if e.x == mario.x and e.y == mario.y - 1 - mario.big:
+				if e.hit(): self.entities.remove(e)
 
 
 	def render(self):
-		# copy map data into buffer
+
+		# copy static data into buffer
 		for r in range(15):
 			for c in range(16):
-				main.buffer[r][c] = self.colors[self.static[r][c + main.cam_pos]]
+				main.buffer[r][c] = self.colors[self.static[r][c + self.cam_pos]]
 
+		# render dynamic stuff
+		for e in self.entities:
+			e.render()
 
 
 
@@ -103,9 +156,17 @@ class Mario:
 		self.x = 3
 		self.y = 12
 
+		self.big = True
+
 		self.move_x = 0
 		self.move_y = 0
 		self.move_y_acc = 0
+
+	def render(self):
+		main.buffer[self.y][self.x - level.cam_pos] = "aa0000"
+		if self.big:
+			main.buffer[self.y-1][self.x - level.cam_pos] = "bb8800"
+
 
 	def update(self):
 
@@ -119,18 +180,19 @@ class Mario:
 			self.move_x = 0
 			# collision check
 			if not level.is_solid(self.x + s, self.y):
-				self.x += s
+				if not self.big: self.x += s
+				elif not level.is_solid(self.x + s, self.y - 1): self.x += s
 
 		# restrict mario's movement
-		if self.x < main.cam_pos:
-			self.x = main.cam_pos
+		if self.x < level.cam_pos:
+			self.x = level.cam_pos
 			self.move_x = 0
 
 		# scrolling
-		if main.cam_pos < self.x - 11:
-			main.cam_pos = self.x - 11
-			if main.cam_pos > level.length - 16:
-				main.cam_pos = level.length - 16
+		if level.cam_pos < self.x - 11:
+			level.cam_pos = self.x - 11
+			if level.cam_pos > level.length - 16:
+				level.cam_pos = level.length - 16
 				if self.x > level.length - 1:
 					self.x = level.length - 1
 					self.move_x = 0
@@ -146,7 +208,6 @@ class Mario:
 				self.move_y = -26	# jump height
 
 		else:
-
 			# gravity
 			self.move_y += 1
 
@@ -156,28 +217,42 @@ class Mario:
 				s = cmp(self.move_y_acc, 0)
 				self.move_y_acc -= s * 77
 
-				# collision check
-				if level.is_solid(self.x, self.y + s):
-					self.move_y = 0
-					self.move_y_accu = 0
-				else:
-					self.y += s
+
+				if s < 0:	# are we moving up?
+
+					if level.is_solid(self.x, self.y + s - self.big):
+						# hit e. g. a block
+						level.hit()
+
+						self.move_y = 0
+						self.move_y_accu = 0
+					else:
+						self.y += s
+
+
+				elif s > 0:	# are we moving down?
+
+					if level.is_solid(self.x, self.y + s):
+
+						self.move_y = 0
+						self.move_y_accu = 0
+					else:
+						self.y += s
+
+				
 	
 
 
 class Main:
 	def __init__(self):
-
-		global engine, level
+		global engine, level, mario
 
 		engine = Engine()
 		level = Level("level.txt")
+		mario = Mario()
 
 		self.buffer = [[0] * 16 for i in range(15)]
 
-		self.cam_pos = 0
-
-		self.mario = Mario()
 
 		pygame.display.init()
 		pygame.display.set_mode((320, 300), DOUBLEBUF | OPENGL)
@@ -189,13 +264,11 @@ class Main:
 
 
 	def start(self):
-
 		while engine.running:
 
 			engine.handle_events()
 
-
-			self.mario.update()
+			mario.update()
 
 			self.render()
 			time.sleep(0.01)
@@ -203,26 +276,14 @@ class Main:
 
 	def render(self):
 
-
 		level.render()
-
-		# mario
-		self.buffer[self.mario.y][self.mario.x - self.cam_pos] = "aa0000"
-
-
-
+		mario.render()
 		engine.render(self.buffer)
 
 
-
 if __name__ == "__main__":
-
 	global main
 	main = Main()
+	main.start()
 
-	try:
-		main.start()
-
-	except KeyboardInterrupt:
-		pass
 
