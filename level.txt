@@ -4,12 +4,12 @@
       www                                                                        
                                                                                 
                                                                                 
-                                                                                
-                                                                                
-                                                                                
-                   ####                                                         
-   g                                                                            
-  ggg         ###                                                              #
- ggggg        ###                                                              #
-###########################   ##################################################
-###########################   ##################################################
+                                                                               Z
+                                                                               Z
+                                                                               Z
+                   ZZZZ                                                        Z
+   g                                                                           Z
+  ggg         ZZZ                                                              Z
+ ggggg        ZZZ                                                              Z
+ZZZZZZZZZZZZZZZZZZZZZZZZZZZ   ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+ZZZZZZZZZZZZZZZZZZZZZZZZZZZ   ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ

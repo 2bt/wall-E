@@ -9,25 +9,15 @@ import time
 import wall
 
 
-WALL = False # True
+WALL = True
 
 class Engine:
 	def __init__(self):
 
-		if WALL:
-			wall.init()
-			wall.send("0404")
+		if WALL: wall.init()
 
 		self.keys = {}
-		self.buffer = [[0] * 16 for i in range(15)]
-		self.colors = {
-			" ":	"9999cc",		# background
-			"#":	"770000",		# wall
-			"m":	"aa0000",		# mario
-			"w":	"dddddd",		# clouds
-			"g":	"22aa22",		# bushes
-		}
-
+		self.buffer = [["000000"] * 16 for i in range(15)]
 		self.running = True
 
 	def handle_events(self):
@@ -59,8 +49,7 @@ class Engine:
 		glBegin(GL_QUADS)
 		for y, row in enumerate(buf):
 			for x, c in enumerate(row):
-				color = self.colors[c]
-				glColor(*[int(color[i:i+2], 16) / 255.0 for i in range(0,6,2)])
+				glColor(*[int(c[i:i+2], 16) / 255.0 for i in range(0,6,2)])
 				glVertex(x, y)
 				glVertex(x+1, y)
 				glVertex(x+1, y+1)
@@ -71,9 +60,40 @@ class Engine:
 
 
 		# wall output
-		buf = "".join(self.colors[c] for row in buf for c in row)
+		buf = "".join(c for row in buf for c in row)
 		if WALL:
 			wall.frame(buf)
+
+
+class Level:
+	def __init__(self, filename):
+
+		self.colors = {
+			" ":	"9999dd",		# background
+			"Z":	"770000",		# wall
+			"w":	"dddddd",		# clouds
+			"g":	"22aa22",		# bushes
+		}
+
+		f = open(filename).read().split("\n")
+
+		self.static = f[:15]
+		self.length = len(f[0])
+
+		# TODO
+		dynamic = f[15:30]
+
+
+	def is_solid(self, x, y):
+		return self.static[y][x].isupper()
+
+
+	def render(self):
+		# copy map data into buffer
+		for r in range(15):
+			for c in range(16):
+				main.buffer[r][c] = self.colors[self.static[r][c + main.cam_pos]]
+
 
 
 
@@ -98,7 +118,7 @@ class Mario:
 			s = cmp(self.move_x, 0)
 			self.move_x = 0
 			# collision check
-			if main.level[self.y][self.x + s] != "#":
+			if not level.is_solid(self.x + s, self.y):
 				self.x += s
 
 		# restrict mario's movement
@@ -109,14 +129,14 @@ class Mario:
 		# scrolling
 		if main.cam_pos < self.x - 11:
 			main.cam_pos = self.x - 11
-			if main.cam_pos > len(main.level[0]) - 16:
-				main.cam_pos = len(main.level[0]) - 16
-				if self.x > len(main.level[0]) - 1:
-					self.x = len(main.level[0]) - 1
+			if main.cam_pos > level.length - 16:
+				main.cam_pos = level.length - 16
+				if self.x > level.length - 1:
+					self.x = level.length - 1
 					self.move_x = 0
 
 		# if staning on ground?
-		if self.move_y == 0 and self.y <= 14 and main.level[self.y + 1][self.x] == "#":
+		if self.move_y == 0 and self.y <= 14 and level.is_solid(self.x, self.y + 1):
 		
 			self.move_y = 0
 			self.move_y_acc = 0
@@ -137,25 +157,23 @@ class Mario:
 				self.move_y_acc -= s * 77
 
 				# collision check
-				if main.level[self.y + s][self.x] == "#":
+				if level.is_solid(self.x, self.y + s):
 					self.move_y = 0
 					self.move_y_accu = 0
 				else:
 					self.y += s
 	
-	def die(self):
-		main.running = False
 
 
 class Main:
 	def __init__(self):
 
-		global engine
+		global engine, level
+
 		engine = Engine()
+		level = Level("level.txt")
 
 		self.buffer = [[0] * 16 for i in range(15)]
-
-		self.level = open("level.txt").read().split("\n")
 
 		self.cam_pos = 0
 
@@ -185,13 +203,13 @@ class Main:
 
 	def render(self):
 
-		# copy map data into buffer
-		for r in range(15):
-			for c in range(16):
-				self.buffer[r][c] = self.level[r][c + self.cam_pos]
+
+		level.render()
 
 		# mario
-		self.buffer[self.mario.y][self.mario.x - self.cam_pos] = "m"
+		self.buffer[self.mario.y][self.mario.x - self.cam_pos] = "aa0000"
+
+
 
 		engine.render(self.buffer)
 
@@ -207,7 +225,4 @@ if __name__ == "__main__":
 
 	except KeyboardInterrupt:
 		pass
-
-#	main.exit()
-
 
