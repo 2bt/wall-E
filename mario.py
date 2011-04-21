@@ -22,6 +22,7 @@ class Engine:
 
 		self.keys = {}
 		self.buffer = [["000000"] * 16 for i in range(15)]
+		self.old_buffer = [row[:] for row in self.buffer]
 		self.running = True
 
 	def handle_events(self):
@@ -39,18 +40,19 @@ class Engine:
 		if kill: self.keys[key] = 0
 		return c
 
+	def pixel(self, x, y, color):
+		if 0 <= x < 16 and 0 <= y < 15: self.buffer[y][x] = color
 
-	def render(self, buf):
+	def render(self):
 
 		# we don't render if things don't change
-		if self.buffer == buf: return
-
-		self.buffer = [row[:] for row in buf]
+		if self.buffer == self.old_buffer: return
+		self.old_buffer = [row[:] for row in self.buffer]
 
 		# local output
 		glClear(GL_COLOR_BUFFER_BIT)
 		glBegin(GL_QUADS)
-		for y, row in enumerate(buf):
+		for y, row in enumerate(self.buffer):
 			for x, c in enumerate(row):
 				glColor(*[int(c[i:i+2], 16) / 255.0 for i in range(0,6,2)])
 				glVertex(x, y)
@@ -62,7 +64,7 @@ class Engine:
 
 		# wall output
 		if self.WALL:
-			buf = "".join(c for row in buf for c in row)
+			buf = "".join(c for row in self.buffer for c in row)
 			wall.frame(buf)
 
 
@@ -83,7 +85,6 @@ class Block(Entity):
 
 
 	def render(self):
-		if level.cam_pos > self.x or self.x >= level.cam_pos + 16: return
 
 		blink_color = ["ddcc00", "ccbb00", "998800", "ccbb00"][(main.ticks/12)%4]
 		colors = {
@@ -93,7 +94,7 @@ class Block(Entity):
 			"f":	blink_color,
 		}
 
-		main.buffer[self.y][self.x - level.cam_pos] = colors[self.c]
+		engine.pixel(self.x - level.cam_pos, self.y, colors[self.c])
 
 	def hit(self):
 		if self.c == "b":
@@ -106,6 +107,7 @@ class Block(Entity):
 			level.entities.append(Fungus(self.x, self.y - 1))
 			self.c = "e"
 
+
 class Fungus(Entity):
 	solid = False
 	def __init__(self, x, y):
@@ -117,8 +119,7 @@ class Fungus(Entity):
 		self.move_y_acc = 0
 
 	def render(self):
-		if level.cam_pos > self.x or self.x >= level.cam_pos + 16: return
-		main.buffer[self.y][self.x - level.cam_pos] = "ccaa77"
+		engine.pixel(self.x - level.cam_pos, self.y, "ccaa77")
 
 	def touch(self):
 		level.entities.remove(self)
@@ -143,7 +144,7 @@ class Fungus(Entity):
 			self.move_y += 1
 
 			self.move_y_acc += self.move_y
-			if abs(self.move_y_acc) > Y_INV_SPEED:	# y - speed
+			if abs(self.move_y_acc) > Y_INV_SPEED:
 				s = cmp(self.move_y_acc, 0)
 				self.move_y_acc -= s * Y_INV_SPEED
 
@@ -185,12 +186,13 @@ class Level:
 				if c in table:
 					self.entities.append(table[c](x, y, c))
 
-
 	def is_solid(self, x, y):
-		if self.static[y][x].isupper():
-			return True
+		if 0 <= x <= self.length and 0 <= y <= 15:
+			if self.static[y][x].isupper(): return True
+
 		for e in self.entities:
 			if e.x == x and e.y == y and e.solid: return True
+
 		return False
 
 
@@ -204,7 +206,7 @@ class Level:
 		# copy static data into buffer
 		for r in range(15):
 			for c in range(16):
-				main.buffer[r][c] = self.colors[self.static[r][c + self.cam_pos]]
+				engine.pixel(c, r, self.colors[self.static[r][c + self.cam_pos]])
 
 		# render dynamic stuff
 		for e in self.entities: e.render()
@@ -226,7 +228,7 @@ class Mario:
 		self.x = 3
 		self.y = 12
 
-		self.big = 0#True
+		self.big = False
 
 		self.move_x = 0
 		self.move_y = 0
@@ -235,12 +237,12 @@ class Mario:
 	def render(self):
 
 		if self.big:
-			main.buffer[self.y - 1][self.x - level.cam_pos] = "aa0000"
-			main.buffer[self.y][self.x - level.cam_pos] = "0000cc"
-#			main.buffer[self.y - 1][self.x - level.cam_pos] = "bb8800"
-#			main.buffer[self.y][self.x - level.cam_pos] = "aa0000"
+			engine.pixel(self.x - level.cam_pos, self.y - 1, "aa0000")
+			engine.pixel(self.x - level.cam_pos, self.y, "0000cc")
+#			engine.pixel(self.x - level.cam_pos, self.y - 1, "bb8800")
+#			engine.pixel(self.x - level.cam_pos, self.y, "aa0000")
 		else:
-			main.buffer[self.y][self.x - level.cam_pos] = "aa0000"
+			engine.pixel(self.x - level.cam_pos, self.y, "aa0000")
 
 	def update(self):
 
@@ -272,7 +274,7 @@ class Mario:
 					self.move_x = 0
 
 		# if staning on ground?
-		if self.move_y == 0 and self.y <= 14 and level.is_solid(self.x, self.y + 1):
+		if self.move_y == 0 and level.is_solid(self.x, self.y + 1):
 		
 			self.move_y = 0
 			self.move_y_acc = 0
@@ -287,20 +289,19 @@ class Mario:
 
 			# y - movement
 			self.move_y_acc += self.move_y
-			if abs(self.move_y_acc) > Y_INV_SPEED:	# y - speed
+			if abs(self.move_y_acc) > Y_INV_SPEED:
 				s = cmp(self.move_y_acc, 0)
 				self.move_y_acc -= s * Y_INV_SPEED
 
 				if s < 0:	# are we moving up?
 					if level.is_solid(self.x, self.y + s - self.big):
-						# hit e. g. a block
-						level.hit()
+
+						level.hit()	# hit e. g. a block
 
 						self.move_y = 0
 						self.move_y_accu = 0
 					else:
 						self.y += s
-
 
 				elif s > 0:	# are we moving down?
 					if level.is_solid(self.x, self.y + s):
@@ -322,7 +323,6 @@ class Main:
 		level = Level("level.txt")
 		mario = Mario()
 
-		self.buffer = [[0] * 16 for i in range(15)]
 		self.ticks = 0
 
 		pygame.display.init()
@@ -346,7 +346,7 @@ class Main:
 			# render
 			level.render()
 			mario.render()
-			engine.render(self.buffer)
+			engine.render()
 
 
 			time.sleep(0.01)
