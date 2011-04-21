@@ -14,7 +14,8 @@ Y_INV_SPEED = 77
 
 class Engine:
 
-	WALL = True
+#	WALL = True
+	WALL = False
 
 	def __init__(self):
 
@@ -76,6 +77,7 @@ class Entity:
 	def hit(self): pass
 	def touch(self): pass
 
+
 class Block(Entity):
 	solid = True
 	def __init__(self, x, y, c):
@@ -100,16 +102,23 @@ class Block(Entity):
 		if self.c == "b":
 			if mario.big:
 				level.entities.remove(self)
+			else:
+				for e in level.entities:
+					if e.x == self.x and e.y == self.y - 1 and isinstance(e, Fungus):
+						e.move_y = -17
+
+
 		elif self.c == "c":
 			self.c = "e"
-			# TODO: gain one coin
+			level.entities.append(CoinFlash(self.x, self.y - 1))
+			mario.coins += 1
+
 		elif self.c == "f":	# fungus
 			level.entities.append(Fungus(self.x, self.y - 1))
 			self.c = "e"
 
 
 class Fungus(Entity):
-	solid = False
 	def __init__(self, x, y):
 		self.x = x
 		self.y = y
@@ -139,7 +148,8 @@ class Fungus(Entity):
 				self.dir = -self.dir
 
 		# y - movement
-		if not level.is_solid(self.x, self.y + 1):
+		if self.move_y != 0 or not level.is_solid(self.x, self.y + 1):
+
 			# gravity
 			self.move_y += 1
 
@@ -153,6 +163,25 @@ class Fungus(Entity):
 					self.move_y_accu = 0
 				else:
 					self.y += s
+
+
+class CoinFlash(Entity):
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
+		self.tick = 0
+	
+	def render(self):
+		engine.pixel(self.x - level.cam_pos, self.y, "eedd00")
+
+	def update(self):
+		self.tick += 1
+
+		if self.tick % 3 == 0:
+			self.y -= 1
+
+		if self.tick > 8:
+			level.entities.remove(self)
 
 
 class Level:
@@ -225,11 +254,12 @@ class Level:
 class Mario:
 
 	def __init__(self):
-		self.x = 3
-		self.y = 12
 
 		self.big = False
+		self.coins = 0
 
+		self.x = 4
+		self.y = 12
 		self.move_x = 0
 		self.move_y = 0
 		self.move_y_acc = 0
