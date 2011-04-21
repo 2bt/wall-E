@@ -1,18 +1,18 @@
                                                                                Z
                                                                                Z
                     ww                www                                      Z
-        ww                   www                                               Z 
+        ww                   www                          w                    Z 
                                                                                Z
                                                                                Z
                                                                                Z
                                                                                Z
                                                                                Z
-                                                                               Z
-   b                                   TT                                      Z
-  bbb             b          TT        TT                                      Z
- bbbbb        gggbbb     g   TT        TT                                      Z
-ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
-ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+                                               EE         EE                   Z
+   b                                   EE      TT  b      TT                   Z
+  bbb             b          EE        TT      TT bbb     TT      b            Z
+ bbbbb        gggbbb     g   TT        TT  gg  TTbbbbb    TT ggg bbb     g     Z
+ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ  ZZZZZZZZ
+ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ  ZZZZZZZZ
                                                                                 
                                                                                 
                                                                                 
@@ -21,7 +21,7 @@ ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
                        c                                                        
                                                                                 
                                                                                 
-                                                                                
+                                                                 c              
                  c   bfbcb                                                      
                                                                                 
                                                                                

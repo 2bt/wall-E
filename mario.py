@@ -71,7 +71,6 @@ class Engine:
 
 class Entity:
 	solid = False
-	def __init__(self, x, y, c): pass
 	def render(self): pass
 	def update(self): pass
 	def hit(self): pass
@@ -194,6 +193,7 @@ class Level:
 			"b":	"11aa11",		# bushes
 			"g":	"44aa44",		# grass
 			"T":	"008800",		# tube
+			"E":	"007700",		# tube end
 		}
 
 		f = open(filename).read().split("\n")
@@ -216,7 +216,7 @@ class Level:
 					self.entities.append(table[c](x, y, c))
 
 	def is_solid(self, x, y):
-		if 0 <= x <= self.length and 0 <= y <= 15:
+		if 0 <= x <= self.length and 0 <= y < 15:
 			if self.static[y][x].isupper(): return True
 
 		for e in self.entities:
