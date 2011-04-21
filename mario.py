@@ -10,6 +10,8 @@ import time
 import wall
 
 
+Y_INV_SPEED = 77
+
 class Engine:
 
 	WALL = True
@@ -66,16 +68,11 @@ class Engine:
 
 class Entity:
 	solid = False
-	
-	def hit(self):
-		# die after a hit?
-		return False
-	
-	def __init__(self, x, y, c):
-		pass
-
-	def render(self):
-		pass
+	def __init__(self, x, y, c): pass
+	def render(self): pass
+	def update(self): pass
+	def hit(self): pass
+	def touch(self): pass
 
 class Block(Entity):
 	solid = True
@@ -86,32 +83,87 @@ class Block(Entity):
 
 
 	def render(self):
-		if level.cam_pos <= self.x < level.cam_pos + 16:
+		if level.cam_pos > self.x or self.x >= level.cam_pos + 16: return
 
-			color = {
-				"b":	"552222",
-				"c":	["ddcc00", "ccbb00", "998800", "ccbb00"][(main.ticks/12)%4],
-				"e":	"bb9900",
-			}
+		blink_color = ["ddcc00", "ccbb00", "998800", "ccbb00"][(main.ticks/12)%4]
+		colors = {
+			"b":	"552222",
+			"e":	"aa8800",
+			"c":	blink_color,
+			"f":	blink_color,
+		}
 
-			main.buffer[self.y][self.x - level.cam_pos] = color[self.c]
+		main.buffer[self.y][self.x - level.cam_pos] = colors[self.c]
 
 	def hit(self):
-		if self.c == "b": return mario.big
+		if self.c == "b":
+			if mario.big:
+				level.entities.remove(self)
 		elif self.c == "c":
 			self.c = "e"
 			# TODO: gain one coin
-			return False
-		elif self.c == "e": return False
+		elif self.c == "f":	# fungus
+			level.entities.append(Fungus(self.x, self.y - 1))
+			self.c = "e"
+
+class Fungus(Entity):
+	solid = False
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
+		self.dir = 1
+		self.move_x = 0
+		self.move_y = 0
+		self.move_y_acc = 0
+
+	def render(self):
+		if level.cam_pos > self.x or self.x >= level.cam_pos + 16: return
+		main.buffer[self.y][self.x - level.cam_pos] = "ccaa77"
+
+	def touch(self):
+		level.entities.remove(self)
+		mario.big = True
+
+	def update(self):
+
+		self.move_x += self.dir
+
+		if abs(self.move_x) > 20: # x - speed
+			s = cmp(self.move_x, 0)
+			self.move_x = 0
+			# collision check
+			if not level.is_solid(self.x + s, self.y):
+				self.x += s
+			else:
+				self.dir = -self.dir
+
+		# y - movement
+		if not level.is_solid(self.x, self.y + 1):
+			# gravity
+			self.move_y += 1
+
+			self.move_y_acc += self.move_y
+			if abs(self.move_y_acc) > Y_INV_SPEED:	# y - speed
+				s = cmp(self.move_y_acc, 0)
+				self.move_y_acc -= s * Y_INV_SPEED
+
+				if level.is_solid(self.x, self.y + s):
+					self.move_y = 0
+					self.move_y_accu = 0
+				else:
+					self.y += s
+
 
 class Level:
 	def __init__(self, filename):
 
 		self.colors = {
-			" ":	"9999dd",		# background
+			" ":	"8888cc",		# background
 			"Z":	"770000",		# wall
-			"w":	"cccccc",		# clouds
-			"g":	"22aa22",		# bushes
+			"w":	"bbbbbb",		# clouds
+			"b":	"11aa11",		# bushes
+			"g":	"44aa44",		# grass
+			"T":	"008800",		# tube
 		}
 
 		f = open(filename).read().split("\n")
@@ -126,6 +178,7 @@ class Level:
 		table = {
 			"b":	Block,
 			"c":	Block,
+			"f":	Block,
 		}
 		for y, row in enumerate(dynamic):
 			for x, c in enumerate(row):
@@ -136,31 +189,35 @@ class Level:
 	def is_solid(self, x, y):
 		if self.static[y][x].isupper():
 			return True
-
 		for e in self.entities:
-			if e.x == x and e.y == y and e.solid:
-				return True
-
+			if e.x == x and e.y == y and e.solid: return True
 		return False
 
 
 	def hit(self):
 		for e in self.entities:
 			if e.x == mario.x and e.y == mario.y - 1 - mario.big:
-				if e.hit(): self.entities.remove(e)
+				e.hit()
 
 
 	def render(self):
-
 		# copy static data into buffer
 		for r in range(15):
 			for c in range(16):
 				main.buffer[r][c] = self.colors[self.static[r][c + self.cam_pos]]
 
 		# render dynamic stuff
-		for e in self.entities:
-			e.render()
+		for e in self.entities: e.render()
 
+
+	def update(self):
+		for e in self.entities: e.update()
+
+	def touch(self):
+		for e in self.entities:
+			if e.x == mario.x:
+				if e.y == mario.y: e.touch()
+				elif e.y == mario.y - 1: e.touch()
 
 
 class Mario:
@@ -169,7 +226,7 @@ class Mario:
 		self.x = 3
 		self.y = 12
 
-		self.big = True
+		self.big = 0#True
 
 		self.move_x = 0
 		self.move_y = 0
@@ -230,13 +287,11 @@ class Mario:
 
 			# y - movement
 			self.move_y_acc += self.move_y
-			if abs(self.move_y_acc) > 77:	# y - speed
+			if abs(self.move_y_acc) > Y_INV_SPEED:	# y - speed
 				s = cmp(self.move_y_acc, 0)
-				self.move_y_acc -= s * 77
-
+				self.move_y_acc -= s * Y_INV_SPEED
 
 				if s < 0:	# are we moving up?
-
 					if level.is_solid(self.x, self.y + s - self.big):
 						# hit e. g. a block
 						level.hit()
@@ -248,7 +303,6 @@ class Mario:
 
 
 				elif s > 0:	# are we moving down?
-
 					if level.is_solid(self.x, self.y + s):
 
 						self.move_y = 0
@@ -256,8 +310,8 @@ class Mario:
 					else:
 						self.y += s
 
-				
-	
+		level.touch()
+
 
 
 class Main:
@@ -285,18 +339,19 @@ class Main:
 
 			engine.handle_events()
 
+			# update
+			level.update()
 			mario.update()
 
-			self.render()
+			# render
+			level.render()
+			mario.render()
+			engine.render(self.buffer)
+
+
 			time.sleep(0.01)
 			self.ticks += 1
 
-
-	def render(self):
-
-		level.render()
-		mario.render()
-		engine.render(self.buffer)
 
 
 if __name__ == "__main__":
