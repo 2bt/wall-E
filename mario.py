@@ -14,8 +14,8 @@ Y_INV_SPEED = 77
 
 class Engine:
 
-#	WALL = True
-	WALL = False
+	WALL = True
+#	WALL = False
 
 	def __init__(self):
 
@@ -98,19 +98,25 @@ class Block(Entity):
 		engine.pixel(self.x - level.cam_pos, self.y, colors[self.c])
 
 	def hit(self):
+
 		if self.c == "b":
 			if mario.big:
 				level.entities.remove(self)
 			else:
+				# fungus bounce
 				for e in level.entities:
 					if e.x == self.x and e.y == self.y - 1 and isinstance(e, Fungus):
 						e.move_y = -17
-
 
 		elif self.c == "c":
 			self.c = "e"
 			level.entities.append(CoinFlash(self.x, self.y - 1))
 			mario.coins += 1
+
+			# fungus bounce
+			for e in level.entities:
+				if e.x == self.x and e.y == self.y - 1 and isinstance(e, Fungus):
+					e.move_y = -17
 
 		elif self.c == "f":	# fungus
 			level.entities.append(Fungus(self.x, self.y - 1))
