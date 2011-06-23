@@ -86,7 +86,6 @@ class Tetris:
 
 	def __init__(self):
 		wall.init()
-		wall.send("0403")
 		wall.clear()
 
 	def render(self):

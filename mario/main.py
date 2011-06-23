@@ -29,20 +29,20 @@ class Block(Entity):
 
 	def render(self):
 
-		if not self.c in "s":
+		if self.c in "s": return
 
-			blink_color = ["ddcc00", "ccbb00", "998800", "ccbb00"][(main.ticks/12)%4]
-			colors = {
-				"b":	"552222",
-				"e":	"aa8800",
-				"c":	blink_color,
-				"f":	blink_color,
-			}
+		blink_color = ["ddcc00", "ccbb00", "998800", "ccbb00"][(main.ticks/12)%4]
+		colors = {
+			"b":	"552222",
+			"e":	"aa8800",
+			"c":	blink_color,
+			"f":	blink_color,
+		}
 
-			wall.pixel(self.x - level.cam_pos, self.y, colors[self.c])
+		wall.pixel(self.x - level.cam_pos, self.y, colors[self.c])
 
 	def hit(self):
-
+		""" object is hit by mario from bottom """
 		if self.c == "b":
 			if mario.big:
 				level.entities.remove(self)
@@ -87,10 +87,8 @@ class Fungus(Entity):
 		self.move_y_acc = 0
 
 	def render(self):
-
 		color = {"grow": "ccaa77", "life": "aaddaa" }[self.type]
 		wall.pixel(self.x - level.cam_pos, self.y, color)
-
 
 	def touch(self):
 
@@ -195,6 +193,7 @@ class Level:
 
 
 	def hit(self):
+		""" test if mario has hit something whith his head from below """
 		res = self.is_solid(mario.x, mario.y - 1 - mario.big)
 		for e in self.entities:
 			if e.x == mario.x and e.y == mario.y - 1 - mario.big:
@@ -213,13 +212,12 @@ class Level:
 
 
 	def update(self):
-		for e in self.entities: e.update()
 
-	def touch(self):
 		for e in self.entities:
+			e.update()
 			if e.x == mario.x:
 				if e.y == mario.y: e.touch()
-				elif e.y == mario.y - 1: e.touch()
+				elif e.y == mario.y - 1: e.touch()	# I don't know why I wrote that (maybe if mario is big?)
 
 
 class Mario:
@@ -308,8 +306,6 @@ class Mario:
 					else:
 						self.y += 1
 
-		level.touch()
-
 
 
 class Main:
@@ -329,8 +325,8 @@ class Main:
 			wall.handle_events()
 
 			# update
-			level.update()
 			mario.update()
+			level.update()
 
 			# render
 			level.render()

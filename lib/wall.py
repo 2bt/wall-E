@@ -2,7 +2,7 @@ import socket
 
 s = None
 
-def init(priority=4):
+def init(priority=3):
 	global s
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect(("172.22.99.6", 1338))
