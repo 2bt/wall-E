@@ -2,8 +2,6 @@
 GRAVITY = 77
 
 Mario = Object:new {
-	big = false,
-	fire = false,
 	score = 0,
 	coins = 0,
 	lives = 3,
@@ -15,11 +13,17 @@ Mario = Object:new {
 	ddy = 0,
 	dir = 1,
 
+	big = false,
+	fire = false,
+	animation = "small",
 	state = "normal",
 	state_delay = 0,
 
---	x = 100, big = true
+--	debug stuff
+	x = 100, big = true, fire = true
+
 }
+
 
 function Mario:collectCoin()
 	self.score = self.score + 200
@@ -34,16 +38,30 @@ function Mario:powerup(t)
 	mario.score = mario.score + 1000
 	if t == "fungus" then
 		self.big = true
+		self.animation = "grow"
 		self.state_delay = 50
 		self.state = "growing"
 	elseif t == "flower" then
-		self.big = true
-		self.fire = true
-		self.state_delay = 50
-		self.state = "burning"
+		if self.fire == false then
+			self.big = true
+			self.fire = true
+			self.animation = "burn"
+			self.state_delay = 50
+			self.state = "burning"
+		end
 	elseif t == "star" then
-		self.state = "invincible"
+		self.state = "super"
 		self.state_delay = 60 * 10
+		if self.big then
+			if self.fire then
+				self.animation = "fire_super"
+			else
+				self.animation = "big_super"
+			end
+		else
+			self.animation = "small_super"
+		end
+
 	end
 
 end
@@ -52,12 +70,18 @@ end
 function Mario:hurt()
 	if self.big == true then
 		self.big = false
-		self.fire = false
+		if self.fire == true then
+			self.animation = "fire_shrink"
+			self.fire = false
+		else
+			self.animation = "shrink"
+		end
 		self.state = "shrinking"
 		self.state_delay = 50
 	else
 		self.lives = self.lives - 1
 		self.state = "dying"
+		self.animation = "small"
 		self.state_delay = 120
 		self.ddy = 0
 		self.dy = -20
@@ -65,65 +89,40 @@ function Mario:hurt()
 
 end
 
-
 function Mario:draw()
+	local sprites = {
+		none		= {},
+		small		= { "aa0000" },
+		big			= { "0000cc", "aa0000" },
+		fire		= { "aaaaaa", "aa0000"},
+		small_super	= { "ffff00" },
+		big_super	= { "ffff00", "ffff00" },
+	}
 
-	if self.state == "growing" or self.state == "shrinking" then
-		if self.state_delay % 8 < 4 then
-			level:pixel(self.x, self.y, "0000cc")
-			level:pixel(self.x, self.y - 1, "aa0000")
-		else
-			level:pixel(self.x, self.y, "aa0000")
-		end
+	local animations = {
+		small		= { "small" },
+		big			= { "big" },
+		fire		= { "fire" },
+		flash		= { "small", "none" },
+		grow		= { "small", "big" },
+		shrink		= { "small", "big" },
+		shrink_fire	= { "small", "fire" },
+		small_super	= { "small", "small_super" },
+		big_super	= { "big", "big_super" },
+		fire_super	= { "fire", "big_super" },
+		burn		= { "big", "fire" },
+	}
 
-	elseif self.state == "flashing" then
-		if self.state_delay % 8 < 4 then
-			level:pixel(self.x, self.y, "aa0000")	
-		end
+	local anim = animations[self.animation]
+	local frame = anim[math.floor(tick / 4) % #anim + 1]
+	local colors = sprites[frame]
 
-	elseif self.state == "invincible" then
-		if self.big then
-			if self.state_delay % 8 < 4 then
-				level:pixel(self.x, self.y - 1, "aa0000")
-				if self.fire then
-					level:pixel(self.x, self.y, "aa9999")
-				else
-					level:pixel(self.x, self.y, "0000cc")
-				end
-			else
-				level:pixel(self.x, self.y - 1, "ffff00")
-				level:pixel(self.x, self.y, "ffff00")
-			end
-		else
-			if self.state_delay % 8 < 4 then
-				level:pixel(self.x, self.y, "aa0000")
-			else
-				level:pixel(self.x, self.y, "ffff00")
-			end
-		end
-
-	elseif self.state == "burning" then
-		level:pixel(self.x, self.y - 1, "aa0000")
-		if self.state_delay % 8 < 4 then
-			level:pixel(self.x, self.y, "0000cc")
-		else
-			level:pixel(self.x, self.y, "cc9999")
-		end
-
-	else
-		if self.big then
-			if self.fire then
-				level:pixel(self.x, self.y - 1, "aa0000")
-				level:pixel(self.x, self.y, "aa8888")
-			else
-				level:pixel(self.x, self.y - 1, "aa0000")
-				level:pixel(self.x, self.y, "0000cc")
-			end
-		else
-			level:pixel(self.x, self.y, "aa0000")
-		end
+	for i, color in ipairs(colors) do
+		level:pixel(self.x, self.y + 1 - i, color)
 	end
+
 end
+
 
 function Mario:update()
 
@@ -153,15 +152,39 @@ function Mario:update()
 		if self.state_delay == 0 then
 			self.state = "flashing"
 			self.state_delay = 180
+			self.animation = "flash"
 		end
 
-	elseif self.state == "flashing" or
-		   self.state == "growing" or
-		   self.state == "burning" or
-		   self.state == "invincible" then
-
+	elseif self.state == "flashing" then
 		if self.state_delay == 0 then
 			self.state = "normal"
+			self.animation = "small"
+		end
+
+	elseif self.state == "growing" then
+		if self.state_delay == 0 then
+			self.state = "normal"
+			self.animation = "big"
+		end
+
+	elseif self.state == "burning" then
+		if self.state_delay == 0 then
+			self.state = "normal"
+			self.animation = "fire"
+		end
+
+	elseif self.state == "super" then
+		if self.state_delay == 0 then
+			self.state = "normal"
+			if self.big then
+				if self.fire then
+					self.animation = "fire"
+				else
+					self.animation = "big"
+				end
+			else
+				self.animation = "small"
+			end
 		end
 
 	end
@@ -169,7 +192,7 @@ function Mario:update()
 
 	if self.state ~= "normal" and
 	   self.state ~= "flashing" and
-	   self.state ~= "invincible" then
+	   self.state ~= "super" then
 		return
 	end
 

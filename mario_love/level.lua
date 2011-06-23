@@ -5,6 +5,7 @@ Level.static_colors = {
 	[" "] = "8888cc",	-- background
 	["Z"] = "770000",	-- wall
 	["B"] = "552222",	-- wall two
+	["c"] = "552222",	-- background wall
 	["x"] = "111111",	-- black
 	["w"] = "bbbbbb",	-- clouds
 	["b"] = "11aa11",	-- bushes

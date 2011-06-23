@@ -1,11 +1,37 @@
 
+-- the little mushroom enemy
+Goomba = GroundPatrol:new {
+	color = "883322",
+	step_time = 22,
+	dir = -1,
 
--- helper function
-function killEnemy(self)
-	self.dy = -17
+}
+
+Level:registerEntity("ao", Goomba)
+
+function Goomba:init(x, y, c)
+	self:super(x, y)
+	if c == "o" then self.dir = 1 end
+end
+
+
+function Goomba:enter(dir_x, dir_y)
+	if mario.state ~= "super" and dir_y > 0 then
+		mario.ddy = 0
+		mario.dy = -17
+		self:die(false)
+		return true
+	end
+end
+
+function Goomba:deathJump()
+	self.dy = -20
 	self.dir = mario.dir
+
 	self.touch = Entity.touch
+
 	self.bounce = Entity.bounce
+
 	self.update = function(self)
 		self.dx = self.dx + 1
 		if self.dx > self.step_time then
@@ -28,49 +54,25 @@ function killEnemy(self)
 	end
 end
 
-
--- the little mushroom enemy
-Goomba = GroundPatrol:new {
-	color = "883322",
-	step_time = 22,
-	dir = -1,
-
-}
-
-Level:registerEntity("ao", Goomba)
-
-function Goomba:init(x, y, c)
-	self:super(x, y)
-	if c == "o" then self.dir = 1 end
-end
-
-
-function Goomba:enter(dir_x, dir_y)
-	if dir_y > 0 then
-		mario.ddy = 0
-		mario.dy = -17
+function Goomba:die(jump)
+	mario.score = mario.score + 100
+	if jump then
+		self:deathJump()
+	else
 		level:removeEntitiy(self)
-		return true
 	end
 end
 
 
-function Goomba:die()
-	mario.score = mario.score + 100
-	-- have the goomba jump of the screen
-	killEnemy(self)
-end
-
 function Goomba:bounce()
-	self:die()
+	self:die(true)
 end
-
 
 function Goomba:touch()
 	if mario.state == "normal" then
 		mario:hurt()
-	elseif mario.state == "invincible" then
-		self:die()
+	elseif mario.state == "super" then
+		self:die(true)
 	end
 end
 

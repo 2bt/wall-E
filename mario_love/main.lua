@@ -15,7 +15,7 @@ end
 
 function love.load()
 	tick = 0
-	wall = Wall(false)
+	wall = Wall()
 	level = Level("level-1-1.txt")
 	mario = Mario()
 end
