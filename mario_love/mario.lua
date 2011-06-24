@@ -20,7 +20,7 @@ Mario = Object:new {
 	state_delay = 0,
 
 --	debug stuff
-	x = 100, big = true, fire = true
+--	x = 100, big = true, fire = true, animation = "fire",
 
 }
 
@@ -91,12 +91,15 @@ end
 
 function Mario:draw()
 	local sprites = {
-		none		= {},
-		small		= { "aa0000" },
-		big			= { "0000cc", "aa0000" },
-		fire		= { "aaaaaa", "aa0000"},
-		small_super	= { "ffff00" },
-		big_super	= { "ffff00", "ffff00" },
+		none			= {},
+		small			= { "aa0000" },
+		big				= { "0000cc", "aa0000" },
+		fire			= { "aaaaaa", "aa0000"},
+		fire2			= { "dddddd", "dd0000"},
+		small_super		= { "bbbb00" },
+		small_super2	= { "ffff00" },
+		big_super		= { "ffff00", "ffff00" },
+		big_super2		= { "bbbb00", "bbbb00" },
 	}
 
 	local animations = {
@@ -107,10 +110,10 @@ function Mario:draw()
 		grow		= { "small", "big" },
 		shrink		= { "small", "big" },
 		shrink_fire	= { "small", "fire" },
-		small_super	= { "small", "small_super" },
-		big_super	= { "big", "big_super" },
-		fire_super	= { "fire", "big_super" },
-		burn		= { "big", "fire" },
+		small_super	= { "small", "small_super", "small_super2" },
+		big_super	= { "big", "big_super", "big_super2" },
+		fire_super	= { "fire", "big_super", "big_super2" },
+		burn		= { "big", "fire2" },
 	}
 
 	local anim = animations[self.animation]
