@@ -13,9 +13,11 @@ function love.keypressed(key)
 
 	elseif key == "f1" then
 		wall:record(true)
+		print("recording...")
 
 	elseif key == "f2" then
 		wall:record(false)
+		print("recording stopped")
 
 	end
 end

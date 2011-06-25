@@ -30,7 +30,7 @@ end
 function Wall:record(flag)
 	if self.socket then
 		local opcode = flag and "05" or "06"
-		self.socket:send(flag .. "\r\n")
+		self.socket:send(opcode .. "\r\n")
 	end
 end
 
