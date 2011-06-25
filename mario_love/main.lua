@@ -10,6 +10,13 @@ require "mario"
 function love.keypressed(key)
 	if key == "escape" then
 		love.event.push "q"
+
+	elseif key == "f1" then
+		wall:record(true)
+
+	elseif key == "f2" then
+		wall:record(false)
+
 	end
 end
 

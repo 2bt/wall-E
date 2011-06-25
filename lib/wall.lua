@@ -27,6 +27,12 @@ function Wall:priority(priority)
 	end
 end
 
+function Wall:record(flag)
+	if self.socket then
+		local opcode = flag and "05" or "06"
+		self.socket:send(flag .. "\r\n")
+	end
+end
 
 function Wall:pixel(x, y, color)
 	if 0 <= x and x < 16 and 0 <= y and y < 15 then
