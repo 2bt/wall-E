@@ -103,17 +103,17 @@ function Mario:draw()
 	}
 
 	local animations = {
-		small		= { "small" },
-		big			= { "big" },
-		fire		= { "fire" },
-		flash		= { "small", "none" },
-		grow		= { "small", "big" },
-		shrink		= { "small", "big" },
-		shrink_fire	= { "small", "fire" },
-		small_super	= { "small", "small_super", "small_super2" },
-		big_super	= { "big", "big_super", "big_super2" },
-		fire_super	= { "fire", "big_super", "big_super2" },
-		burn		= { "big", "fire2" },
+		small			= { "small" },
+		big				= { "big" },
+		fire			= { "fire" },
+		flash			= { "small", "none" },
+		grow			= { "small", "big" },
+		shrink			= { "small", "big" },
+		fire_shrink		= { "small", "fire" },
+		small_super		= { "small", "small_super", "small_super2" },
+		big_super		= { "big", "big_super", "big_super2" },
+		fire_super		= { "fire", "big_super", "big_super2" },
+		burn			= { "big", "fire2" },
 	}
 
 	local anim = animations[self.animation]
