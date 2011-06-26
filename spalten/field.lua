@@ -118,8 +118,6 @@ function Field:update()
 			for y = 1, 3 do
 				self.grid[self.y - y + 1][self.x] = self.column[y]
 			end
-			self.x = 3
-			self.y = 1
 			self:newColumn()
 		end
 
