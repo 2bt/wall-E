@@ -1,18 +1,8 @@
-
-local gem_colors = {}
-gem_colors[0] = "000000"
-gem_colors[1] = "ff0000"
-gem_colors[2] = "0000ff"
-gem_colors[3] = "00ff00"
-gem_colors[4] = "ffff00"
-gem_colors[5] = "ff00ff"
-gem_colors[6] = "00ffff"
-
 Field = Object:new()
+
 function Field:init(pos, keys)
 	self.pos = pos
 	self.keys = keys
-	self.column = {}
 
 	-- init clear grid
 	self.grid = {}
@@ -28,22 +18,55 @@ function Field:init(pos, keys)
 	-- how many different sorts of gems
 	self.level = 5
 	-- inverse dropping speed
-	self.drop_delay = 8 -- 20
+	self.drop_delay = 20
 
 	self.drop_count = 0
+	self.combo_count = 0
+	self.score = 0
 
+	self.column = {}
 	self:newColumn()
 	self.state = "normal"
 	self.state_delay = 0
 
 	self.gems_in_line = {}
-	self.old_input = {}
 	self.opponent = nil
+
+	self.input = { dx = 0, rep = 0 }
+
 end
 
 
 function Field:setOpponent(opponent)
 	self.opponent = opponent
+end
+
+
+function Field:getInput()
+
+	local events = {}
+
+	local dx = bool[love.keyboard.isDown(self.keys.right)] -
+			   bool[love.keyboard.isDown(self.keys.left)]
+
+	if dx ~= self.input.dx then
+		self.input.rep = 0
+	end
+	self.input.dx = dx
+	self.input.rep = self.input.rep - 1
+	if self.input.rep <= 0 then
+		events.dx = dx
+		self.input.rep = 3
+	else
+		events.dx = 0
+	end
+
+	events.down = love.keyboard.isDown(self.keys.down)
+
+	events.rot = love.keyboard.isDown(self.keys.rot) and not self.input.rot
+	self.input.rot = love.keyboard.isDown(self.keys.rot)
+
+	return events
 end
 
 
@@ -65,18 +88,13 @@ function Field:pushColumn()
 end
 
 
-function Field:rotateColumn()
-	local c = self.column
-	c[1], c[2], c[3] = c[2], c[3], c[1]
-end
-
 
 function Field:collision()
 	if self.x < 1 or self.x > 6 or self.y > 13 then
 		return true
 	end
 	for y = math.max(1, self.y - 2), self.y do
-		if self.grid[y][self.x] > 0 then
+		if self.grid[y][self.x] ~= 0 then
 			return true
 		end
 	end
@@ -101,20 +119,6 @@ function Field:collapse()
 end
 
 
-function Field:getInput()
-	-- TODO: keyrepeat
-	local input = {}
-	local events = {}
-	for event, key in pairs(self.keys) do
-		input[event] = love.keyboard.isDown(key)
-		events[event] = input[event] and not self.old_input[event]
-	end
-	self.old_input = input
-
-	return events
-end
-
-
 function Field:update()
 
 	self.state_delay = self.state_delay - 1
@@ -122,22 +126,18 @@ function Field:update()
 
 		local events = self:getInput()
 
-		-- TODO: roatation should be possible also in other direction
 		if events.rot then
-			self:rotateColumn()
+			local c = self.column
+			c[1], c[2], c[3] = c[3], c[1], c[2]
 		end
 		-- x-movement
-		local x = self.x
-		if events.left then
-			self.x = self.x - 1
+		if events.dx ~= 0 then
+			local x = self.x
+			self.x = self.x + events.dx
+			if self:collision() then
+				self.x = x
+			end
 		end
-		if events.right then
-			self.x = self.x + 1
-		end
-		if self:collision() then
-			self.x = x
-		end
-
 		-- y-movement
 		self.drop_count = self.drop_count + 1
 		local y = self.y
@@ -157,8 +157,8 @@ function Field:update()
 					self.state = "highlight"
 					self.state_delay = 20
 				else
-					self:newColumn()
-					self.state = "normal"
+					self.state = "wait"
+					self.state_delay = 10
 				end
 			end
 		end
@@ -169,13 +169,14 @@ function Field:update()
 			-- remove gems
 			for _, coords in pairs(self.gems_in_line) do
 				self.grid[coords.y][coords.x] = 0
+				self.score = self.score + 1
 			end
 			self.gems_in_line = {}
 
 			self.state = "collapse"
 			self.state_delay = 2
-
 		end
+
 	elseif self.state == "collapse" then
 		if self.state_delay == 0 then
 
@@ -187,14 +188,20 @@ function Field:update()
 					self.state = "highlight"
 					self.state_delay = 20
 				else
-					self:newColumn()
-					self.state = "normal"
+					self.state = "wait"
+					self.state_delay = 10
 				end
 			end
 		end
 
-	elseif self.state == "over" then
+	elseif self.state == "wait" then
+		if self.state_delay == 0 then
+			self:newColumn()
+			self.state = "normal"
+		end
 
+	elseif self.state == "over" then
+		-- TODO
 	end
 
 end
@@ -268,8 +275,21 @@ function Field:findGemsInLine()
 	end
 
 	-- return true if we found something
-	return next(buf) and true or false
+	return next(buf) ~= nil
 end
+
+
+local gem_colors = {}
+
+gem_colors[-1] = "666666"	-- brick
+gem_colors[0] = "000000"	-- background
+
+gem_colors[1] = "bb0000"
+gem_colors[2] = "0000bb"
+gem_colors[3] = "00bb00"
+gem_colors[4] = "bbbb00"
+gem_colors[5] = "bb00bb"
+gem_colors[6] = "00bbbb"
 
 
 function Field:draw()
@@ -280,6 +300,7 @@ function Field:draw()
 
 			local gem = row[x]
 			if self.state == "normal" and y > 0 and x == self.x then
+				-- also draw active column
 				gem = self.column[self.y - y + 1] or gem
 			end
 
@@ -288,6 +309,7 @@ function Field:draw()
 		end
 	end
 
+	-- draw flashing gems
 	if self.state == "highlight" then
 		for _, coords in pairs(self.gems_in_line) do
 			local color = ({ "ffffff", "000000" })[self.state_delay % 3 + 1]
