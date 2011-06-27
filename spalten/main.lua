@@ -6,13 +6,12 @@ require "field"
 function love.keypressed(key)
 	if key == "escape" then
 		love.event.push "q"
-	
 	end
-	
 end
 
 
 function love.load()
+	math.randomseed(os.time())
 	wall = Wall("ledwall", 1338, 3)
 
 	time = love.timer.getTime() * 1000
