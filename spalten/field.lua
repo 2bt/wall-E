@@ -31,6 +31,7 @@ function Field:init(pos, keys)
 
 	self.gems_in_line = {}
 	self.opponent = nil
+	self.rows_to_add = 0
 
 	self.input = { dx = 0, rep = 0 }
 
@@ -41,6 +42,9 @@ function Field:setOpponent(opponent)
 	self.opponent = opponent
 end
 
+function Field:addRows(count)
+	self.rows_to_add = self.rows_to_add + count
+end
 
 function Field:getInput()
 
@@ -153,6 +157,7 @@ function Field:update()
 				self.state = "over"
 			else
 				-- check for gems to be removed from the grid
+				self.combo_count = 0
 				if self:findGemsInLine() then
 					self.state = "highlight"
 					self.state_delay = 20
@@ -190,14 +195,34 @@ function Field:update()
 				else
 					self.state = "wait"
 					self.state_delay = 10
+
+					-- add rows to the opponend's field
+					if self.opponent and self.combo_count > 1 then
+						self.opponent:addRows(self.combo_count - 1)
+					end
 				end
 			end
 		end
 
 	elseif self.state == "wait" then
 		if self.state_delay == 0 then
-			self:newColumn()
-			self.state = "normal"
+
+			if self.rows_to_add > 0 then
+				self.state_delay = 2
+
+				-- raise the field
+				for x = 1, 6 do
+					for y = 1, 12 do
+						self.grid[y][x] = self.grid[y + 1][x]
+					end
+					self.grid[13][x] = -1
+				end
+				self.rows_to_add = self.rows_to_add - 1
+
+			else
+				self:newColumn()
+				self.state = "normal"
+			end
 		end
 
 	elseif self.state == "over" then
@@ -210,8 +235,12 @@ end
 function Field:findGemsInLine()
 
 	-- TODO: make the code look nicer
-	local buf = self.gems_in_line
+
 	local grid = self.grid
+
+	local function addGem(x, y)
+		self.gems_in_line[y .. " " .. x] = { x = x, y = y }	
+	end
 
 	-- [-] check
 	for y = 1, 13 do
@@ -219,11 +248,10 @@ function Field:findGemsInLine()
 			if grid[y][x] > 0 and
 			   grid[y][x] == grid[y][x + 1] and
 			   grid[y][x] == grid[y][x + 2] then
-				local gem = grid[y][x]
-				while grid[y][x] == gem do
-					buf[y .. " " .. x] = { x = x, y = y }
-					x = x + 1
-				end
+				addGem(x, y)
+				addGem(x + 1, y)
+				addGem(x + 2, y)
+				self.combo_count = self.combo_count + 1
 			end
 		end
 	end
@@ -233,11 +261,10 @@ function Field:findGemsInLine()
 			if grid[y][x] > 0 and
 			   grid[y][x] == grid[y + 1][x] and
 			   grid[y][x] == grid[y + 2][x] then
-				local gem = grid[y][x]
-				while y <= 13 and grid[y][x] == gem do
-					buf[y .. " " .. x] = { x = x, y = y }
-					y = y + 1
-				end
+				addGem(x, y)
+				addGem(x, y + 1)
+				addGem(x, y + 2)
+				self.combo_count = self.combo_count + 1
 			end
 		end
 	end
@@ -247,13 +274,10 @@ function Field:findGemsInLine()
 			if grid[y][x] > 0 and
 			   grid[y][x] == grid[y + 1][x + 1] and
 			   grid[y][x] == grid[y + 2][x + 2] then
-				local gem = grid[y][x]
-				local i = y
-				while i <= 13 and grid[i][x] == gem do
-					buf[i .. " " .. x] = { x = x, y = i }
-					x = x + 1
-					i = i + 1
-				end
+				addGem(x, y)
+				addGem(x + 1, y + 1)
+				addGem(x + 2, y + 2)
+				self.combo_count = self.combo_count + 1
 			end
 		end
 	end
@@ -263,19 +287,16 @@ function Field:findGemsInLine()
 			if grid[y][x] > 0 and
 			   grid[y][x] == grid[y + 1][x - 1] and
 			   grid[y][x] == grid[y + 2][x - 2] then
-				local gem = grid[y][x]
-				local i = y
-				while i <= 13 and grid[i][x] == gem do
-					buf[i .. " " .. x] = { x = x, y = i }
-					x = x - 1
-					i = i + 1
-				end
+				addGem(x, y)
+				addGem(x - 1, y + 1)
+				addGem(x - 2, y + 2)
+				self.combo_count = self.combo_count + 1
 			end
 		end
 	end
 
 	-- return true if we found something
-	return next(buf) ~= nil
+	return next(self.gems_in_line) ~= nil
 end
 
 
@@ -319,5 +340,18 @@ function Field:draw()
 		end
 	end
 
+	-- draw score
+	local score = self.score
+	local y = 13
+	local x = self.pos == 0 and 7 or self.pos
+	while score > 0 and y >= 0 do
+		if score % 2 > 0 then
+			wall:pixel(x, y, "aaaaaa")
+		end
+		score = math.floor(score / 2)
+		y = y - 1
+	end
 end
+
+
 
