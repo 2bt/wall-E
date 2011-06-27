@@ -44,6 +44,10 @@ end
 
 function Field:addRows(count)
 	self.rows_to_add = self.rows_to_add + count
+	if self.state == "normal" then
+		self.state = "wait"
+		self.state_delay = 2
+	end
 end
 
 function Field:getInput()
@@ -208,7 +212,6 @@ function Field:update()
 		if self.state_delay == 0 then
 
 			if self.rows_to_add > 0 then
-				self.state_delay = 2
 
 				-- raise the field
 				for x = 1, 6 do
@@ -218,6 +221,7 @@ function Field:update()
 					self.grid[13][x] = -1
 				end
 				self.rows_to_add = self.rows_to_add - 1
+				self.state_delay = self.rows_to_add == 0 and 10 or 2
 
 			else
 				self:newColumn()
