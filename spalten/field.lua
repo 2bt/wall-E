@@ -44,6 +44,7 @@ function Field:setOpponent(opponent)
 	self.opponent = opponent
 end
 
+
 function Field:raiseField(count)
 	self.raise = self.raise + count
 	if self.state == "normal" then
@@ -52,24 +53,20 @@ function Field:raiseField(count)
 	end
 end
 
-function Field:getInput()
+
+function Field:bot()
 
 	local key_down = {}
-	if self.keys then
-		-- human
-		key_down.right = love.keyboard.isDown(self.keys.right)
-		key_down.left = love.keyboard.isDown(self.keys.left)
-		key_down.down = love.keyboard.isDown(self.keys.down)
-		key_down.rot = love.keyboard.isDown(self.keys.rot)
 
-	else
-		-- TODO: bot
-		-- go through all moves
-		-- choose the best
+	-- go through all moves
+	-- choose the best
 
-		local save_x = self.x
-		local save_y = self.y
+	local save_x = self.x
+	local save_y = self.y
 
+	local moves = {}
+
+	for rot = 0, 2 do
 		for x = 1, 6 do
 			self.x = x
 			self.y = save_y
@@ -83,7 +80,19 @@ function Field:getInput()
 
 
 					self:findGemsInLine()
-				
+					local magic = self.combo_count * 10
+					for y2 = 1, 13 do
+						if math.max(unpack(self.grid[y2])) > 0 then
+							magic = magic + y2
+							break
+						end
+					end
+
+					if not moves[magic] then
+						moves[magic] = {}
+					end
+					table.insert(moves[magic], { x = x, rot = rot })
+
 					self.gems_in_line = {}
 					self.combo_count = 0
 
@@ -97,14 +106,46 @@ function Field:getInput()
 			end
 		end
 
-		self.x = save_x
-		self.y = save_y
+		-- rotate
+		local c = self.column
+		c[1], c[2], c[3] = c[3], c[1], c[2]
+	end
+
+	-- select any of the best moves
+	local magic = 0
+	for i, l in pairs(moves) do
+		if i > magic then
+			magic = i
+		end
+	end
+	local move = moves[magic][math.random(#moves[magic])]
+
+	self.x = save_x
+	self.y = save_y
+
+	key_down.left = math.random(10) == 1 and self.x > move.x
+	key_down.right = math.random(10) == 1 and self.x < move.x
+
+	key_down.down = self.x == move.x and math.random(3) == 1
+	key_down.rot =  move.rot > 0 and math.random(15) == 1
+
+	return key_down
+end
 
 
-		key_down.left = false
-		key_down.right = false
-		key_down.down = false
-		key_down.rot = false
+function Field:getInput()
+
+	local key_down = {}
+	if self.keys then
+		-- human
+		key_down.right = love.keyboard.isDown(self.keys.right)
+		key_down.left = love.keyboard.isDown(self.keys.left)
+		key_down.down = love.keyboard.isDown(self.keys.down)
+		key_down.rot = love.keyboard.isDown(self.keys.rot)
+
+	else
+		-- bot
+		key_down = self:bot()
 	end
 
 	local events = {}
@@ -282,9 +323,12 @@ function Field:update()
 				self.state_delay = 2
 
 			elseif self.current_raise < self.raise then
-				-- lower the field
+				-- raise the field
 				self.current_raise = self.current_raise + 1
 				for x = 1, 6 do
+					if self.grid[1][x] > 0 then
+						self.state = "over"
+					end
 					for y = 1, 12 do
 						self.grid[y][x] = self.grid[y + 1][x]
 					end

@@ -6,6 +6,15 @@ require "field"
 function love.keypressed(key)
 	if key == "escape" then
 		love.event.push "q"
+
+	elseif key == "f1" then
+		wall:record(true)
+		print("recording...")
+
+	elseif key == "f2" then
+		wall:record(false)
+		print("recording stopped")
+
 	end
 end
 
@@ -18,9 +27,10 @@ function love.load()
 
 	-- twp player
 	fields = {
-		Field(0, { left = "a", right = "d", down = "s", rot = "w" }),
---		Field(0, false),
+--		Field(0, { left = "a", right = "d", down = "s", rot = "w" }),
+		Field(0, false),
 		Field(8, { left = "left", right = "right", down = "down", rot = "up" })
+--		Field(8, false)
 	}
 	fields[1]:setOpponent(fields[2])
 	fields[2]:setOpponent(fields[1])
