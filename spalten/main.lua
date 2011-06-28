@@ -19,6 +19,7 @@ function love.load()
 	-- twp player
 	fields = {
 		Field(0, { left = "a", right = "d", down = "s", rot = "w" }),
+--		Field(0, false),
 		Field(8, { left = "left", right = "right", down = "down", rot = "up" })
 	}
 	fields[1]:setOpponent(fields[2])

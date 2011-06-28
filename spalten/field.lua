@@ -31,7 +31,9 @@ function Field:init(pos, keys)
 
 	self.gems_in_line = {}
 	self.opponent = nil
-	self.rows_to_add = 0
+
+	self.raise = 0
+	self.current_raise = 0
 
 	self.input = { dx = 0, rep = 0 }
 
@@ -42,21 +44,71 @@ function Field:setOpponent(opponent)
 	self.opponent = opponent
 end
 
-function Field:addRows(count)
-	self.rows_to_add = self.rows_to_add + count
+function Field:raiseField(count)
+	self.raise = self.raise + count
 	if self.state == "normal" then
 		self.state = "wait"
-		self.state_delay = 2
+		self.state_delay = 10
 	end
 end
 
 function Field:getInput()
 
+	local key_down = {}
+	if self.keys then
+		-- human
+		key_down.right = love.keyboard.isDown(self.keys.right)
+		key_down.left = love.keyboard.isDown(self.keys.left)
+		key_down.down = love.keyboard.isDown(self.keys.down)
+		key_down.rot = love.keyboard.isDown(self.keys.rot)
+
+	else
+		-- TODO: bot
+		-- go through all moves
+		-- choose the best
+
+		local save_x = self.x
+		local save_y = self.y
+
+		for x = 1, 6 do
+			self.x = x
+			self.y = save_y
+			if not self:collision() then
+				repeat
+					self.y = self.y + 1
+				until self:collision()
+				self.y = self.y - 1
+				if self.y >= 3 then
+					self:pushColumn()
+
+
+					self:findGemsInLine()
+				
+					self.gems_in_line = {}
+					self.combo_count = 0
+
+
+					-- reverse the push
+					self.grid[self.y][self.x] = 0
+					self.grid[self.y - 1][self.x] = 0
+					self.grid[self.y - 2][self.x] = 0
+				end
+
+			end
+		end
+
+		self.x = save_x
+		self.y = save_y
+
+
+		key_down.left = false
+		key_down.right = false
+		key_down.down = false
+		key_down.rot = false
+	end
+
 	local events = {}
-
-	local dx = bool[love.keyboard.isDown(self.keys.right)] -
-			   bool[love.keyboard.isDown(self.keys.left)]
-
+	local dx = bool[key_down.right] - bool[key_down.left]
 	if dx ~= self.input.dx then
 		self.input.rep = 0
 	end
@@ -68,11 +120,9 @@ function Field:getInput()
 	else
 		events.dx = 0
 	end
-
-	events.down = love.keyboard.isDown(self.keys.down)
-
-	events.rot = love.keyboard.isDown(self.keys.rot) and not self.input.rot
-	self.input.rot = love.keyboard.isDown(self.keys.rot)
+	events.down = key_down.down
+	events.rot = key_down.rot and not self.input.rot
+	self.input.rot = key_down.rot
 
 	return events
 end
@@ -200,10 +250,18 @@ function Field:update()
 					self.state = "wait"
 					self.state_delay = 10
 
-					-- add rows to the opponend's field
-					if self.opponent and self.combo_count > 1 then
-						self.opponent:addRows(self.combo_count - 1)
+					-- initiate lowering of one's field
+					-- and raising of opponent's field
+					if self.combo_count > 1 then
+						self.raise = self.raise - (self.combo_count - 1)
+						if self.raise < 0 then
+							if self.opponent then
+								self.opponent:raiseField(-self.raise)
+							end
+							self.raise = 0
+						end
 					end
+
 				end
 			end
 		end
@@ -211,17 +269,28 @@ function Field:update()
 	elseif self.state == "wait" then
 		if self.state_delay == 0 then
 
-			if self.rows_to_add > 0 then
+			if self.current_raise > self.raise then
+				-- lower the field
+				self.current_raise = self.current_raise - 1
 
-				-- raise the field
+				for x = 1, 6 do
+					for y = 13, 2, -1 do
+						self.grid[y][x] = self.grid[y - 1][x]
+					end
+					self.grid[1][x] = 0
+				end
+				self.state_delay = 2
+
+			elseif self.current_raise < self.raise then
+				-- lower the field
+				self.current_raise = self.current_raise + 1
 				for x = 1, 6 do
 					for y = 1, 12 do
 						self.grid[y][x] = self.grid[y + 1][x]
 					end
 					self.grid[13][x] = -1
 				end
-				self.rows_to_add = self.rows_to_add - 1
-				self.state_delay = self.rows_to_add == 0 and 10 or 2
+				self.state_delay = 2
 
 			else
 				self:newColumn()
@@ -232,7 +301,6 @@ function Field:update()
 	elseif self.state == "over" then
 		-- TODO
 	end
-
 end
 
 
