@@ -1,5 +1,8 @@
 Field = Object:new()
 
+require "bot"
+require "draw"
+
 function Field:init(pos, keys)
 	self.pos = pos
 	self.keys = keys
@@ -51,121 +54,6 @@ function Field:raiseField(count)
 		self.state = "wait"
 		self.state_delay = 10
 	end
-end
-
-
-function Field:bot()
-
-	local key_down = {}
-
-	-- go through all moves
-	-- choose the best
-
-	local save_x = self.x
-	local save_y = self.y
-
-	local moves = {}
-
-	for rot = 0, 2 do
-		for x = 1, 6 do
-			self.x = x
-			self.y = save_y
-			if not self:collision() then
-				repeat
-					self.y = self.y + 1
-				until self:collision()
-				self.y = self.y - 1
-				if self.y >= 3 then
-					self:pushColumn()
-
-
-					self:findGemsInLine()
-					local magic = self.combo_count * 10
-					for y2 = 1, 13 do
-						if math.max(unpack(self.grid[y2])) > 0 then
-							magic = magic + y2
-							break
-						end
-					end
-
-					if not moves[magic] then
-						moves[magic] = {}
-					end
-					table.insert(moves[magic], { x = x, rot = rot })
-
-					self.gems_in_line = {}
-					self.combo_count = 0
-
-
-					-- reverse the push
-					self.grid[self.y][self.x] = 0
-					self.grid[self.y - 1][self.x] = 0
-					self.grid[self.y - 2][self.x] = 0
-				end
-
-			end
-		end
-
-		-- rotate
-		local c = self.column
-		c[1], c[2], c[3] = c[3], c[1], c[2]
-	end
-
-	-- select any of the best moves
-	local magic = 0
-	for i, l in pairs(moves) do
-		if i > magic then
-			magic = i
-		end
-	end
-	local move = moves[magic][math.random(#moves[magic])]
-
-	self.x = save_x
-	self.y = save_y
-
-	key_down.left = math.random(10) == 1 and self.x > move.x
-	key_down.right = math.random(10) == 1 and self.x < move.x
-
-	key_down.down = self.x == move.x and math.random(3) == 1
-	key_down.rot =  move.rot > 0 and math.random(15) == 1
-
-	return key_down
-end
-
-
-function Field:getInput()
-
-	local key_down = {}
-	if self.keys then
-		-- human
-		key_down.right = love.keyboard.isDown(self.keys.right)
-		key_down.left = love.keyboard.isDown(self.keys.left)
-		key_down.down = love.keyboard.isDown(self.keys.down)
-		key_down.rot = love.keyboard.isDown(self.keys.rot)
-
-	else
-		-- bot
-		key_down = self:bot()
-	end
-
-	local events = {}
-	local dx = bool[key_down.right] - bool[key_down.left]
-	if dx ~= self.input.dx then
-		self.input.rep = 0
-	end
-	self.input.dx = dx
-	self.input.rep = self.input.rep - 1
-	if self.input.rep <= 0 then
-		events.dx = dx
-		self.input.rep = 3
-	else
-		events.dx = 0
-	end
-	events.down = key_down.down
-	events.rot = key_down.rot and not self.input.rot
-	self.input.rot = key_down.rot
-
-	return events
 end
 
 
@@ -413,60 +301,6 @@ function Field:findGemsInLine()
 
 	-- return true if we found something
 	return next(self.gems_in_line) ~= nil
-end
-
-
-local gem_colors = {}
-
-gem_colors[-1] = "666666"	-- brick
-gem_colors[0] = "000000"	-- background
-
-gem_colors[1] = "bb0000"
-gem_colors[2] = "0000bb"
-gem_colors[3] = "00bb00"
-gem_colors[4] = "bbbb00"
-gem_colors[5] = "bb00bb"
-gem_colors[6] = "00bbbb"
-
-
-function Field:draw()
-
-	for y = 0, 14 do
-		local row = self.grid[y] or {}
-		for x = 0, 7 do
-
-			local gem = row[x]
-			if self.state == "normal" and y > 0 and x == self.x then
-				-- also draw active column
-				gem = self.column[self.y - y + 1] or gem
-			end
-
-			local color = gem and gem_colors[gem] or "888888"
-			wall:pixel(self.pos + x, y, color)
-		end
-	end
-
-	-- draw flashing gems
-	if self.state == "highlight" then
-		for _, coords in pairs(self.gems_in_line) do
-			local color = ({ "ffffff", "000000" })[self.state_delay % 3 + 1]
-			if color then
-				wall:pixel(self.pos + coords.x, coords.y, color)
-			end
-		end
-	end
-
-	-- draw score
-	local score = self.score
-	local y = 13
-	local x = self.pos == 0 and 7 or self.pos
-	while score > 0 and y >= 0 do
-		if score % 2 > 0 then
-			wall:pixel(x, y, "aaaaaa")
-		end
-		score = math.floor(score / 2)
-		y = y - 1
-	end
 end
 
 
