@@ -37,7 +37,6 @@ function love.load()
 	math.randomseed(os.time())
 	time = love.timer.getTime() * 1000
 
-
 	wall = Wall("ledwall", 1338, 3, true)
 
 	local_input = {}
@@ -45,12 +44,10 @@ function love.load()
 		local_input[button] = false
 	end
 
-
 	fields = {
 		Field(0, wall.input),
-
-		Field(8, local_input),		-- local player
---		Field(8, false),			-- bot
+--		Field(8, local_input),		-- local player
+		Field(8, false),			-- bot
 	}
 
 	fields[1]:setOpponent(fields[2])

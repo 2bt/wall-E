@@ -85,7 +85,7 @@ function Wall:update_input()
 			local t = socket.select({ self.socket }, nil, 0)[1]
 			if t then
 
-				local bits = self.socket:receive():match "09(..)"
+				local bits = self.socket:receive():match "0901(..).."
 				if bits then
 					local bits = ("0x" .. bits) * 1		-- convert from hex
 
