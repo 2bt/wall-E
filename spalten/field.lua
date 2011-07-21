@@ -3,9 +3,9 @@ Field = Object:new()
 require "bot"
 require "draw"
 
-function Field:init(pos, keys)
+function Field:init(pos, key_state)
 	self.pos = pos
-	self.keys = keys
+	self.key_state = key_state
 
 	-- init clear grid
 	self.grid = {}
@@ -17,18 +17,18 @@ function Field:init(pos, keys)
 		self.grid[i] = row
 	end
 
-
 	-- how many different sorts of gems
 	self.level = 5
 	-- inverse dropping speed
 	self.drop_delay = 20
 
+	self.score = 0
 	self.drop_count = 0
 	self.combo_count = 0
-	self.score = 0
 
 	self.column = {}
 	self:newColumn()
+
 	self.state = "normal"
 	self.state_delay = 0
 

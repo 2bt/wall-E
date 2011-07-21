@@ -3,12 +3,12 @@
 function Field:getInput()
 
 	local key_down = {}
-	if self.keys then
+	if self.key_state then
 		-- human
-		key_down.right = love.keyboard.isDown(self.keys.right)
-		key_down.left = love.keyboard.isDown(self.keys.left)
-		key_down.down = love.keyboard.isDown(self.keys.down)
-		key_down.rot = love.keyboard.isDown(self.keys.rot)
+		key_down.right = self.key_state.right
+		key_down.left = self.key_state.left
+		key_down.down = self.key_state.down
+		key_down.rot = self.key_state.a
 
 	else
 		-- bot
@@ -112,10 +112,21 @@ function Field:bot()
 	end
 
 	local key_down = {}
-	key_down.left = math.random(10) == 1 and self.x > best_move.x
-	key_down.right = math.random(10) == 1 and self.x < best_move.x
+
+	-- easy bot
+	key_down.left = self.x > best_move.x and math.random(10) == 1
+	key_down.right = self.x < best_move.x and math.random(10) == 1
 	key_down.down = self.x == best_move.x and self.y > math.random(10)
-	key_down.rot =  best_move.rot > 0 and math.random(10) == 1
+	key_down.rot =  best_move.rot > 0 and math.random(3) == 1
+
+--[[
+	-- fast bot
+	key_down.left = self.x > best_move.x
+	key_down.right = self.x < best_move.x
+	key_down.down = self.x == best_move.x or math.random(3) == 1
+	key_down.rot =  best_move.rot > 0 and math.random(2) == 1
+--]]
+
 	return key_down
 end
 

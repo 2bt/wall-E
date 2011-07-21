@@ -23,14 +23,18 @@ function love.keypressed(key)
 end
 
 function love.load()
-	tick = 0
-	wall = Wall()
+	wall = Wall("ledwall", 1338, 3, true)
+
 	level = Level("level-1-1.txt")
 	mario = Mario()
+
+	tick = 0
 end
 
 function love.update(dt)
 	tick = tick + 1
+
+	wall:update_input()
 
 	mario:update()
 	if mario.state ~= "growing" and

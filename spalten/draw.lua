@@ -5,7 +5,7 @@ gem_colors[-1] = "555555"	-- brick
 gem_colors[0] = "000000"	-- background
 
 gem_colors[1] = "bb2200"
-gem_colors[2] = "0022bb"
+gem_colors[2] = "00aabb"
 gem_colors[3] = "00bb00"
 gem_colors[4] = "bbbb00"
 gem_colors[5] = "8800bb"
