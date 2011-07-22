@@ -138,6 +138,7 @@ function Field:update()
 			self:pushColumn()
 			if self.y < 3 then
 				self.state = "over"
+				self.state_delay = 30
 			else
 				-- check for gems to be removed from the grid
 				self.combo_count = 0
@@ -213,16 +214,17 @@ function Field:update()
 			elseif self.current_raise < self.raise then
 				-- raise the field
 				self.current_raise = self.current_raise + 1
+				self.state_delay = 2
 				for x = 1, 6 do
 					if self.grid[1][x] > 0 then
 						self.state = "over"
+						self.state_delay = 30
 					end
 					for y = 1, 12 do
 						self.grid[y][x] = self.grid[y + 1][x]
 					end
 					self.grid[13][x] = -1
 				end
-				self.state_delay = 2
 
 			else
 				self:newColumn()
@@ -232,6 +234,11 @@ function Field:update()
 
 	elseif self.state == "over" then
 		-- TODO
+
+		if self.state_delay == 0 then
+			love.event.push "q"
+		end
+
 	end
 end
 
