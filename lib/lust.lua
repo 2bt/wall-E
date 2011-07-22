@@ -22,7 +22,7 @@ love = {
 	},
 	timer = {
 		getTime = socket.gettime,
-		sleep = function(t) socket.sleep(t / 1000) end
+		sleep = function(t) socket.sleep(math.max(0, t / 1000)) end
 	}
 }
 
