@@ -69,7 +69,6 @@ function love.update(dt)
 	wall:update_input()
 
 
-
 	fields[1]:update()
 	fields[2]:update()
 
