@@ -24,7 +24,6 @@ end
 
 function love.load()
 	wall = Wall("ledwall", 1338, 3, true)
-
 	level = Level("level-1-1.txt")
 	mario = Mario()
 

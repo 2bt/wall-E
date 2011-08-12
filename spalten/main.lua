@@ -37,7 +37,8 @@ function love.load()
 	math.randomseed(os.time())
 	time = love.timer.getTime() * 1000
 
-	wall = Wall("ledwall", 1338, 3, true)
+--	wall = Wall("ledwall", 1338, 3, true)
+	wall = Wall(false, 1338, 3, false)
 
 	local_input = {}
 	for button in pairs(input_keys) do

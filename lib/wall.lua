@@ -33,6 +33,11 @@ function Wall:init(host, port, priority, pad)
 		self.buffer[i] = "000000"
 	end
 
+	self.input = {}
+	for button in pairs(input_masks) do
+		self.input[button] = false
+	end
+
 	if host == false then return end
 
 	host = host or "ledwall"
@@ -50,10 +55,6 @@ function Wall:init(host, port, priority, pad)
 		self.socket:send("0901\r\n")
 	end
 
-	self.input = {}
-	for button in pairs(input_masks) do
-		self.input[button] = false
-	end
 
 end
 
