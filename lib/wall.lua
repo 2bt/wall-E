@@ -14,28 +14,42 @@ local input_masks = {
 	b = 128,
 }
 
-local input_keys = {
-	up = "up",
-	down = "down",
-	left = "left",
-	right = "right",
-	select = "rshift",
-	start = "return",
-	a = "x",
-	b = "c",
+local local_keys = {
+	{
+		up = "up",
+		down = "down",
+		left = "left",
+		right = "right",
+		select = "rshift",
+		start = "return",
+		a = "o",
+		b = "p",
+	}, {
+		up = "w",
+		down = "s",
+		left = "a",
+		right = "d",
+		select = "lshift",
+		start = "lctrl",
+		a = "1",
+		b = "2",
+	}
 }
 
 
-function Wall:init(host, port, priority, pad)
+function Wall:init(host, port, priority, remote_pads)
 
 	self.buffer = {}
 	for i = 1, 15 * 16 do
 		self.buffer[i] = "000000"
 	end
 
-	self.input = {}
-	for button in pairs(input_masks) do
-		self.input[button] = false
+	-- button set-up
+	self.input = { {}, {} }
+	for _, p in ipairs(self.input) do
+		for button in pairs(input_masks) do
+			p[button] = false
+		end
 	end
 
 	if host == false then return end
@@ -49,12 +63,11 @@ function Wall:init(host, port, priority, pad)
 	self.socket:connect(host, port)
 	self:priority(priority)
 
-	self.pad = pad
-	if pad then
-		-- subscribe input
+	self.remote_pads = remote_pads
+	-- subscribe input
+	if remote_pads then
 		self.socket:send("0901\r\n")
 	end
-
 
 end
 
@@ -80,29 +93,42 @@ end
 
 
 function Wall:update_input()
-	if self.pad then
 
-		repeat
+	if self.remote_pads then
+		while true do
 			local t = socket.select({ self.socket }, nil, 0)[1]
-			if t then
-
-				local rec = self.socket:receive()
-				local bits = rec and rec:match "0901(..).."
-				if bits then
-					local bits = ("0x" .. bits) * 1		-- convert from hex
-
-					for button, mask in pairs(input_masks) do
-						self.input[button] = bit.band(mask, bits) > 0
-					end
-				end
-
+			if not t then
+				break
 			end
-		until t == nil
+			
+			local msg = self.socket:receive()
+			local nr, bits
+
+			if msg then
+				nr, bits = msg:match "09(..)(..).."
+			end
+
+			if nr and nr >= 1 and nr <= 2 then
+				-- convert from hex
+				nr = ("0x" .. nr) * 1
+				bits = ("0x" .. bits) * 1
+
+				local p = self.input[nr]
+				for button, mask in pairs(input_masks) do
+					p[button] = bit.band(mask, bits) > 0
+				end
+			end
+
+		end
 	else
 
-		for button, key in pairs(input_keys) do
-			self.input[button] = love.keyboard.isDown(key)
+		for nr, keys in ipairs(local_keys) do
+			local p = self.input[nr]
+			for button, key in pairs(keys) do
+				p[button] = love.keyboard.isDown(key)
+			end
 		end
+
 	end
 
 end

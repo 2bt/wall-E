@@ -23,7 +23,7 @@ function love.keypressed(key)
 end
 
 function love.load()
-	wall = Wall("ledwall", 1338, 3, true)
+	wall = Wall("ledwall", 1338, 3, false)
 	level = Level("level-1-1.txt")
 	mario = Mario()
 

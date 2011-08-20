@@ -207,7 +207,7 @@ function Mario:update()
 
 
 	-- x-movement
-	local lr = bool[wall.input.right] - bool[wall.input.left]
+	local lr = bool[wall.input[1].right] - bool[wall.input[1].left]
 
 
 	self.dx = self.dx + lr
@@ -246,7 +246,7 @@ function Mario:update()
 
 	level:scroll()
 
-	local jump = wall.input.a
+	local jump = wall.input[1].a
 
 	if self.dy == 0 and level:isSolid(self.x, self.y + 1) then
 		-- staning on ground

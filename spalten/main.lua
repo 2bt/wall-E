@@ -20,35 +20,15 @@ end
 
 
 
--- keys for a possible local player
-local input_keys = {
-	up = "up",
-	down = "down",
-	left = "left",
-	right = "right",
-	select = "rshift",
-	start = "return",
-	a = "x",
-	b = "c",
-}
-
-
 function love.load()
 	math.randomseed(os.time())
 	time = love.timer.getTime() * 1000
 
---	wall = Wall("ledwall", 1338, 3, true)
-	wall = Wall(false, 1338, 3, false)
-
-	local_input = {}
-	for button in pairs(input_keys) do
-		local_input[button] = false
-	end
+	wall = Wall("ledwall", 1338, 3, false)
 
 	fields = {
-		Field(0, wall.input),
---		Field(8, local_input),		-- local player
-		Field(8, false),			-- bot
+		Field(0, wall.input[1]),
+		Field(8, false),	-- bot
 	}
 
 	fields[1]:setOpponent(fields[2])
@@ -63,12 +43,12 @@ function love.update(dt)
 	time = time + 1000 / 30
 	love.timer.sleep(time - t)
 
-
-	for button, key in pairs(input_keys) do
-		local_input[button] = love.keyboard.isDown(key)
-	end
 	wall:update_input()
 
+	-- allow 2nd player to join
+	if wall.input[2].select then
+		fields[2].key_state = wall.input[2]
+	end
 
 	fields[1]:update()
 	fields[2]:update()
