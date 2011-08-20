@@ -46,9 +46,9 @@ function Wall:init(host, port, priority, remote_pads)
 
 	-- button set-up
 	self.input = { {}, {} }
-	for _, p in ipairs(self.input) do
+	for _, player in ipairs(self.input) do
 		for button in pairs(input_masks) do
-			p[button] = false
+			player[button] = false
 		end
 	end
 
@@ -102,20 +102,21 @@ function Wall:update_input()
 			end
 			
 			local msg = self.socket:receive()
-			local nr, bits
 
 			if msg then
-				nr, bits = msg:match "09(..)(..).."
+				local  nr, bits = msg:match "09(..)(..).."
 			end
 
-			if nr and nr >= 1 and nr <= 2 then
+			if nr then
 				-- convert from hex
 				nr = ("0x" .. nr) * 1
 				bits = ("0x" .. bits) * 1
 
-				local p = self.input[nr]
-				for button, mask in pairs(input_masks) do
-					p[button] = bit.band(mask, bits) > 0
+				if nr >= 1 and nr <= 2 then
+					local player = self.input[nr]
+					for button, mask in pairs(input_masks) do
+						player[button] = bit.band(mask, bits) > 0
+					end
 				end
 			end
 
@@ -123,9 +124,9 @@ function Wall:update_input()
 	else
 
 		for nr, keys in ipairs(local_keys) do
-			local p = self.input[nr]
+			local player = self.input[nr]
 			for button, key in pairs(keys) do
-				p[button] = love.keyboard.isDown(key)
+				player[button] = love.keyboard.isDown(key)
 			end
 		end
 

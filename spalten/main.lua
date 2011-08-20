@@ -24,7 +24,7 @@ function love.load()
 	math.randomseed(os.time())
 	time = love.timer.getTime() * 1000
 
-	wall = Wall("ledwall", 1338, 3, false)
+	wall = Wall("localhost", 1338, 3, true)
 
 	fields = {
 		Field(0, wall.input[1]),
@@ -46,8 +46,10 @@ function love.update(dt)
 	wall:update_input()
 
 	-- allow 2nd player to join
-	if wall.input[2].select then
-		fields[2].key_state = wall.input[2]
+	if not fields[2].key_state then
+		if wall.input[2].a then
+			fields[2].key_state = wall.input[2]
+		end
 	end
 
 	fields[1]:update()
