@@ -109,8 +109,8 @@ function Wall:update_input()
 
 			if nr then
 				-- convert from hex
-				nr = ("0x" .. nr) * 1
-				bits = ("0x" .. bits) * 1
+				nr = tonumber("0x" .. nr)
+				bits = tonumber("0x" .. bits)
 
 				if nr >= 1 and nr <= 2 then
 					local player = self.input[nr]
