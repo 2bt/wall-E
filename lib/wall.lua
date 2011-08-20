@@ -102,9 +102,9 @@ function Wall:update_input()
 			end
 			
 			local msg = self.socket:receive()
-
+			local nr, bits
 			if msg then
-				local  nr, bits = msg:match "09(..)(..).."
+				nr, bits = msg:match "09(..)(..).."
 			end
 
 			if nr then
