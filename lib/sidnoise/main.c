@@ -17,6 +17,8 @@ static unsigned char buffer[MAX_SOUND_LENGTH];
 static unsigned int pos = 0;
 static unsigned int length = 0;
 static volatile int running = 1;
+static pthread_t thread;
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void flush(int serial) {
 	assert(write(serial, "\xf7", 1) == 1);
@@ -48,6 +50,7 @@ static void* play(void* dummy) {
 	// kinda main loop
 	while(running) {
 
+		pthread_mutex_lock(&mutex);
 		if(pos < length) {
 
 			for(i = 0; i < 25; i++) {
@@ -58,6 +61,8 @@ static void* play(void* dummy) {
 			}
 			flush(serial);
 		}
+		pthread_mutex_unlock(&mutex);
+
 		usleep(20000);
 	}
 
@@ -84,15 +89,18 @@ static int LUA_sidnoise_play_sound(lua_State *L) {
 		lua_error(L);
 	}
 
+	pthread_mutex_lock(&mutex);
+
 	length = len;
 	memcpy(buffer, sound, len);
 	pos = 0;
+
+	pthread_mutex_unlock(&mutex);
 
 	return 0;
 }
 
 
-static unsigned long thread;
 static void my_exit() {
 	running = 0;
 	pthread_join(thread, NULL);
