@@ -74,7 +74,7 @@ end
 
 function Wall:priority(priority)
 	if self.socket then
-		self.socket:send("04%02d\r\n" % priority)
+		self.socket:send("04%02X\r\n" % priority)
 	end
 end
 
