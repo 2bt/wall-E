@@ -1,7 +1,7 @@
 require "helper"
 require "wall"
 require "field"
-
+require "sound"
 
 function love.keypressed(key)
 	if key == "escape" then
@@ -19,12 +19,12 @@ function love.keypressed(key)
 end
 
 
-
 function love.load()
 	math.randomseed(os.time())
 	time = love.timer.getTime() * 1000
 
-	wall = Wall("localhost", 1338, 3, true)
+--	wall = Wall("localhost", 1338, 3, true)
+	wall = Wall()
 
 	fields = {
 		Field(0, wall.input[1]),

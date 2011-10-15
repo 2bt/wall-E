@@ -114,6 +114,7 @@ function Field:update()
 		local events = self:getInput()
 
 		if events.rot then
+			sound("rotate")
 			local c = self.column
 			c[1], c[2], c[3] = c[3], c[1], c[2]
 		end
@@ -133,6 +134,7 @@ function Field:update()
 			self.drop_count = 0
 		end
 		if self:collision() then
+			sound("collision")
 			self.y = y
 
 			self:pushColumn()
@@ -143,6 +145,7 @@ function Field:update()
 				-- check for gems to be removed from the grid
 				self.combo_count = 0
 				if self:findGemsInLine() then
+					sound("line-complete")
 					self.state = "highlight"
 					self.state_delay = 20
 				else
@@ -174,6 +177,7 @@ function Field:update()
 				self.state_delay = 2
 			else
 				if self:findGemsInLine() then
+					sound("line-complete")
 					self.state = "highlight"
 					self.state_delay = 20
 				else
