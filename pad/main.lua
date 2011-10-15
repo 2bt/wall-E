@@ -1,3 +1,5 @@
+player = 1
+
 require "socket"
 require "bit"
 
@@ -6,7 +8,6 @@ function love.load()
 	socket:connect("ledwall", 1338)
 	socket:send("0400\r\n")
 	key_state = 0
-	player = 1
 end
 
 keys = {
