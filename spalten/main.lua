@@ -23,8 +23,8 @@ function love.load()
 	math.randomseed(os.time())
 	time = love.timer.getTime() * 1000
 
---	wall = Wall("localhost", 1338, 3, true)
 	wall = Wall()
+--	wall = Wall("94.45.224.211", 1338, 3, false)
 
 	fields = {
 		Field(0, wall.input[1]),
