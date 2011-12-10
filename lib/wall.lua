@@ -52,11 +52,7 @@ function Wall:init(host, port, priority, remote_pads)
 		end
 	end
 
-	if host == false then return end
-
-	host = host or "ledwall"
-	port = port or 1338
-	priority = priority or 3
+	if not host then return end
 
 	self.msg = ""
 	self.socket = socket.tcp()
