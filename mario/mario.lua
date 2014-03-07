@@ -148,7 +148,7 @@ function Mario:update()
 		end
 
 		if self.state_delay == 0 then
-			love.event.push "q"
+			love.event.quit()
 		end
 
 	elseif self.state == "shrinking" then
