@@ -240,7 +240,7 @@ function Field:update()
 		-- TODO
 
 		if self.state_delay == 0 then
-			love.event.push "q"
+			love.event.quit()
 		end
 
 	end

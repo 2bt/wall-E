@@ -5,7 +5,7 @@ require "sound"
 
 function love.keypressed(key)
 	if key == "escape" then
-		love.event.push "q"
+		love.event.quit()
 
 	elseif key == "f1" then
 		wall:record(true)
@@ -23,8 +23,8 @@ function love.load()
 	math.randomseed(os.time())
 	time = love.timer.getTime() * 1000
 
-	wall = Wall()
---	wall = Wall("94.45.224.211", 1338, 3, false)
+--	wall = Wall()
+	wall = Wall("10.0.1.2", 1350, 3, false)
 
 	fields = {
 		Field(0, wall.input[1]),
@@ -39,9 +39,9 @@ end
 
 function love.update(dt)
 	-- constant 30 FPS
-	local t = love.timer.getTime() * 1000
-	time = time + 1000 / 30
-	love.timer.sleep(time - t)
+--	local t = love.timer.getTime() * 1000
+--	time = time + 1000 / 30
+--	love.timer.sleep(time - t)
 
 	wall:update_input()
 
