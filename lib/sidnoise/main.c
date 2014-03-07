@@ -28,6 +28,8 @@ static void flush(int serial) {
 static void* play(void* dummy) {
 
 	int serial = open("/dev/ttyUSB0", O_RDWR);
+	if(serial == -1) return NULL;
+
 	struct termios config;
 	tcgetattr(serial, &config);
 	config.c_iflag = 0;

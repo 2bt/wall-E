@@ -9,7 +9,7 @@ require "mario"
 
 function love.keypressed(key)
 	if key == "escape" then
-		love.event.push "q"
+		love.event.quit()
 
 	elseif key == "f1" then
 		wall:record(true)
@@ -23,7 +23,7 @@ function love.keypressed(key)
 end
 
 function love.load()
-	wall = Wall("localhost", 1338, 3, true)
+	wall = Wall("10.0.1.2", 1350, 3, true)
 
 	level = Level("level-1-1.txt")
 	mario = Mario()

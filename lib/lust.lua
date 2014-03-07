@@ -18,7 +18,7 @@ love = {
 		rectangle = do_nothing,
 	},
 	event = {
-		push = function(e) done = e == "q" end
+		quit = function() done = true end
 	},
 	timer = {
 		getTime = socket.gettime,

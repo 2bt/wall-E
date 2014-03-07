@@ -62,7 +62,7 @@ function Wall:init(host, port, priority, remote_pads)
 	self.remote_pads = remote_pads
 	-- subscribe input
 	if remote_pads then
-		self.socket:send("0901\r\n")
+		self.socket:send("090101\r\n")
 	end
 
 end
@@ -96,11 +96,11 @@ function Wall:update_input()
 			if not t then
 				break
 			end
-			
+
 			local msg = self.socket:receive()
 			local nr, bits
 			if msg then
-				nr, bits = msg:match "09(..)(..).."
+				nr, bits = msg:match "09(..)(..)"
 			end
 
 			if nr then
@@ -143,7 +143,22 @@ function Wall:draw()
 		love.graphics.setColor(r, g, b)
 		love.graphics.rectangle("fill", x, y, w, h)
 	end
-	local msg = table.concat(self.buffer)
+
+	--local msg = table.concat(self.buffer)
+
+	local msg = ""
+	for y = 0, 23 do
+		local yy = y - 4
+		for x = 0, 23 do
+			local xx = x - 4
+			if xx >= 0 and xx < 16 and yy >= 0 and yy < 15 then
+				msg = msg .. self.buffer[yy * 16 + xx + 1]
+			else
+				msg = msg .. "000000"
+			end
+		end
+	end
+
 	if msg ~= self.msg and self.socket then
 		self.msg = msg
 		self.socket:send("03%s\r\n" % msg)

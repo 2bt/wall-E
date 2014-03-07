@@ -5,7 +5,7 @@ require "bit"
 
 function love.load()
 	socket = socket.tcp()
-	socket:connect("ledwall", 1338)
+	socket:connect("g3d2.hq.c3d2.de", 1339)
 	socket:send("0400\r\n")
 	key_state = 0
 end
@@ -28,7 +28,7 @@ end
 
 function love.keypressed(key)
 	if key == "escape" then
-		love.event.push "q"	
+		love.event.push "q"
 	end
 
 	if keys[key] then
